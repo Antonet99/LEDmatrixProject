@@ -9,19 +9,23 @@
 #include <PubSubClient.h>
 
 // TODO: ESP32 MQTT user config
-const char *ssid = "iliadbox-5F89A1_2.4Ghz";     // Wifi SSID
-const char *password = "bt55mqf773q32995qn3b73"; // Wifi Password
-const char *username = "sod23";                  // my mqtt username
-const char *pubTopic = "publish/esp32/motion";   // publish/username/apiKeyIn
-const unsigned int writeInterval = 25000;        // write interval (in ms)
+const char *ssid = "iliadbox-5F89A1_2.4Ghz";          // Wifi SSID
+const char *wifi_password = "bt55mqf773q32995qn3b73"; // Wifi Password
 
 // MQTT config
-const char *mqtt_server = "192.168.1.149";
+const char *mqtt_username = "sod23";                // my mqtt username
+const char *mqtt_password = "sod23";                // my mqtt password
+const char *mqtt_pubTopic = "publish/esp32/motion"; // publish/username/apiKeyIn
+const char *mqtt_clientID = "esp32_sod";            // MQTT client ID
+const unsigned int writeInterval = 25000;           // write interval (in ms)
+
+// MQTT config
+const char *mqtt_server = "192.168.1.17";
 unsigned int mqtt_port = 1883;
 int PIR_data = 19; // probabilmente da cambiare su 19
 
 WiFiClient askClient;
-PubSubClient client(askClient);
+PubSubClient client(mqtt_server, mqtt_port, askClient);
 
 void setup()
 {
@@ -31,7 +35,7 @@ void setup()
   Serial.print("********** connecting to WIFI : ");
   Serial.println(ssid);
 
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid, wifi_password);
 
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -44,6 +48,7 @@ void setup()
   Serial.println(WiFi.localIP());
 
   client.setServer(mqtt_server, mqtt_port);
+  // client.connect(mqtt_clientID, mqtt_username, mqtt_password)
   client.setCallback(callback);
 
   pinMode(PIR_data, INPUT); // pir data as input
@@ -72,7 +77,7 @@ void loop()
   snprintf(mqtt_payload, 30, "m1=%ld", PIR_status);
   Serial.print("Publish message: ");
   Serial.println(mqtt_payload);
-  client.publish(pubTopic, mqtt_payload);
+  client.publish(mqtt_pubTopic, mqtt_payload);
   Serial.println("> MQTT data published");
   Serial.println("********** End ");
   Serial.println("*****************************************************");
@@ -99,7 +104,7 @@ void reconnect()
   {
     Serial.print("********** Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect("ESP32Client", username, ""))
+    if (client.connect(mqtt_clientID, mqtt_username, mqtt_password))
     {
       Serial.println("-> MQTT client connected");
     }
