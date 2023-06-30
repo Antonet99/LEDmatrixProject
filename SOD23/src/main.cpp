@@ -1,9 +1,3 @@
-/*
- * MQTT and AskSensors IoT Platform
- * Description: ESP32 publishes PIR motion data to AskSensors over MQTT
- *  Author: https://asksensors.com, 2020
- *  github: https://github.com/asksensors
- */
 #include <iostream>
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -39,11 +33,11 @@ void motion_task(void * parameter){
   if (pir_status)
   {
     //Serial.println("PIR motion detected");
-    Serial.println("********** Publish MQTT data ( moviment sensor ) \n");
+    Serial.println("********** Publish MQTT data ( motion sensor ) \n");
     char mqtt_payload1[30] = "";
     snprintf(mqtt_payload1, 30, "m1=%ld", pir_status);
     client.publish(mqtt_pubTopic, mqtt_payload1);
-    Serial.println("> MQTT data ( moviment sensor ) published \n");
+    Serial.println("> MQTT data ( motion sensor ) published \n");
 
   }
 
