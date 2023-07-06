@@ -1,6 +1,8 @@
 {
   "cmake.configureOnOpen": false,
   "files.associations": {
-    "new": "cpp"
-  }
+    "new": "cpp",
+    "string": "cpp"
+  },
+  "cmake.sourceDirectory": "/Users/antoniobaio/Desktop/Progetti/ProgettoSOD/SOD23/.pio/libdeps/az-delivery-devkit-v4/Unity"
 }

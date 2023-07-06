@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "author": "antonet",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-neopixel-canvas",
+      "id": "neopixels",
+      "top": 0,
+      "left": 0,
+      "attrs": { "rows": "8", "cols": "8", "pixelate": "1" }
+    },
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 244.89, "left": 151.23, "attrs": {} },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": 398.11,
+      "left": -58.44,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 316.53,
+      "left": 354.76,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "neopixels:VDD", "esp:VIN", "red", [ "v0" ] ],
+    [ "neopixels:VSS", "esp:GND.1", "black", [ "v26.93", "h197.39", "v182.96" ] ],
+    [ "neopixels:DIN", "esp:D2", "green", [ "v39.19", "h178.09", "v152.1" ] ],
+    [ "pir1:VCC", "esp:VIN", "red", [ "v11.83", "h164.98", "v-98.55" ] ],
+    [ "pir1:GND", "esp:GND.1", "black", [ "v7.16", "h274.46", "v-103.85" ] ],
+    [ "pir1:OUT", "esp:D12", "gold", [ "v22.18", "h141.64", "v-137" ] ],
+    [ "led1:C", "esp:GND.1", "black", [ "v0" ] ],
+    [ "led1:A", "esp:D4", "red", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}
