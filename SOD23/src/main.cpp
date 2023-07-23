@@ -9,20 +9,12 @@ using namespace std;
 
 void setup()
 {
- wifiConn();
- Wire.begin();
- lightSensorStart();
-
-
+    wifiConn();
+    mqttConn();
+    Wire.begin();
+    lightSensorStart();
 }
 
 void loop()
 {
- 
-   
 }
-
-
-
-
-
