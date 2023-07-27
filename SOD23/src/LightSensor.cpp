@@ -1,5 +1,5 @@
 #include "headers/lightSensor.hpp"
-#include "headers/constLightSensor.hpp"
+#include "headers/constants/constLightSensor.hpp"
 /**
  * Inizializzatione della variabile BH1750
  */
@@ -14,7 +14,6 @@ void lightSensorStart()
 
 void lightSensorTask(unsigned int pir_status)
 {
-
     if (pir_status)
     {
         float lux = (int)lightMeter.readLightLevel(); // leggi il valore dal sensore di luminosità
