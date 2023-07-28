@@ -51,11 +51,12 @@ void mqttConn()
 */
 void callback(char *topic, byte *payload, unsigned int length)
 {
+  char* message = new char[length];
   Serial.print("Messaggio ricevuto dal topic :");
   Serial.print(topic);
   for (int i = 0; i < length; i++)
   {
-    Serial.print((char)payload[i]);
+    
   }
   Serial.println();
 
