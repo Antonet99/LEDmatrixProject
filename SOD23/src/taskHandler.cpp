@@ -1,53 +1,37 @@
 #include "headers/taskHandler.hpp"
-
+BH1750 lightMeter;
 CRGB leds[NUM_LEDS];
-/**
- * Inizializzatione della variabile BH1750
 
-void lightSensorStart()
-{
-    lightMeter.begin();
-}
 /**
- * Logica del Task freeRTOS che gestisce il sensore di luminosità.
- * @param pir_status valore che indica se il sensore di movimento ha rilevato movimento (1) oppure no (0)
- 
-
-void lightSensorTask(void *parameter)
-{
+ * 
+*/
+void lightSensorTask(void *parameter){
     unsigned int pir_status = *(unsigned int *)parameter;
-    if (pir_status)
-    {
-        float lux = (int)lightMeter.readLightLevel(); // leggi il valore dal sensore di luminosità
-        String message = "Luminosità rilevata: " + String(lux);
-        Serial.println(message);
-    }
-    else
-        Serial.println("Sensore di luminosità non attivo, nessun movimento rilevato dal PIR");
 
-    vTaskDelete(NULL);
+    if(pir_status){
+    float lux = getLux();
+    String message = "Brightness: " + String( setBrightness(lux) );
+    Serial.println(message);
+    FastLED.setBrightness( setBrightness(lux) );
+    } 
+    else Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
+   vTaskDelete(NULL);
 }
- */
 /**
- * Logica del Task freeRTOS per ON/OFF della matrice led.
- * La matrice si accende se il PIR rileva un movimento.
- * @param parameter valore del PIR,1 se il sensore rileva movimento e 0 altrimenti
- */
+ * 
+*/
 void ledMatrixTask(void *parameter)
 {
     unsigned int pir_status = *(unsigned int *)parameter;
-
-    if (pir_status)
-    {
-        //setColors();
-        
-    }
-
+    setColors(pir_status);
     vTaskDelete(NULL);
 }
-
+/**
+ * 
+*/
 void getTasks(unsigned int pir_status){
  //xTaskCreate(lightSensorTask,"MOTION_TASK",10000,(void*)&pir_status,1,NULL);
+ xTaskCreate(lightSensorTask,"LIGHT_SENSOR_TASK",10000,(void*)&pir_status,1,NULL);
  xTaskCreate(ledMatrixTask,"MOTION_TASK",10000,(void*)&pir_status,2,NULL);
 }
 
@@ -76,6 +60,7 @@ uint8_t XY(uint8_t x, uint8_t y)
 }
 
 void setColors(int pir_status){
+
 if(pir_status){
 leds[XY(0, 0)] = CRGB(255, 255, 0);
 leds[XY(1, 0)] = CRGB(255, 255, 0);
@@ -142,6 +127,9 @@ leds[XY(5, 7)] = CRGB(255, 255, 0);
 leds[XY(6, 7)] = CRGB(255, 255, 0);
 leds[XY(7, 7)] = CRGB(255, 255, 0);
 FastLED.show();
+FastLED.clear();
+FastLED.setBrightness( 0 );
+
 }
 else {
     /*
@@ -210,16 +198,39 @@ leds[XY(5, 7)] = CRGB(0, 0, 0);
 leds[XY(6, 7)] = CRGB(0, 0, 0);
 leds[XY(7, 7)] = CRGB(0, 0, 0);
 */
-FastLED.clear();
+
 FastLED.show();
-
 }
 
 }
+/*
+ * 
+*/
 
 void setMatrixConfig(){
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
-  FastLED.setBrightness( BRIGHTNESS );
+
+}
+/*
+*
+*/
+uint8_t setBrightness(float lux){
+    uint8_t brightness = 0;
+    if( lux > 0 && lux < 40 ) brightness = 2; 
+    else if(lux > 40 && lux < 120) brightness = 50;  
+    else if(lux > 120 && lux < 200) brightness = 100;  
+    else if(lux > 200 && lux < 300) brightness = 180; 
+    return brightness;
+}
+/*
+ * 
+*/
+float getLux(){
+lightMeter.begin();
+ float lux = (int)lightMeter.readLightLevel(); // leggi il valore dal sensore di luminosità
+ String message = "Luminosità rilevata: " + String(lux);
+ Serial.println(message);
+ return lux;
 }
 
 
