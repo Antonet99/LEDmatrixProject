@@ -1,11 +1,12 @@
 #include <iostream>
 #include <Wire.h>
 #include <string.h>
-#include "headers/connections.hpp"
 #include "headers/taskHandler.hpp"
+
 
 using namespace std;
 
+ int PIR_data = 19;
 
 /**
  * Funzione di callback utilizzata per verificare la corretta ricezione dei dati 
@@ -30,12 +31,15 @@ void callback(char *topic, byte *payload, unsigned int length)
 
 void setup()
 {
+  delay(1000);
+  Serial.begin(9600);
     //wifiConn();
     //mqttConn();
-    Wire.begin();
-    lightSensorStart();
+    
+    //lightSensorStart();
     pinMode(PIR_data, INPUT);
     setMatrixConfig();
+    Wire.begin();
     
   
    
@@ -45,8 +49,10 @@ void loop()
 {
     bool pir_status = digitalRead(PIR_data);
     pir_status ? Serial.println("MOVIMENTO RILEVATO") : Serial.println("NESSUN MOVIMENTO RILEVATO...");
+    
     unsigned int pir_value = (int) pir_status;
-    getTasks(pir_value);
+    //getTasks(pir_value);
+    setColors(pir_value);
 
     delay(2000);
 
