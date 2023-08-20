@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <string.h>
 #include "headers/taskHandler.hpp"
+#include "headers/connections.hpp"
 using namespace std;
 int PIR_data = 19;
 
@@ -26,18 +27,18 @@ void callback(char *topic, byte *payload, unsigned int length)
 
 }
 
-
 void setup()
 {
   delay(1000);
   Serial.begin(9600);
-    //wifiConn();
-    //mqttConn();
+  // connessione Wifi e MQTT
+    wifiConn();
+    mqttConn();
 
-    //lightSensorStart();
-     pinMode(PIR_data, INPUT);
-
+    pinMode(PIR_data, INPUT);
+  // configurazione di base della matrice led
     setMatrixConfig();
+    
     Wire.begin();
     
   

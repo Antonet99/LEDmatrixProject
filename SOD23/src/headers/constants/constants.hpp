@@ -4,8 +4,8 @@
 #include <WiFi.h>
 #include "headers/constants/constMqtt.hpp"
 
-const char *ssid = "iPhone";    
-const char *wifi_password = "alex12345";
+const char *ssid = "Vodafone-A48487438";    
+const char *wifi_password = "psLLfEEMA4AdGhCX";
 
 WiFiClient askClient;
 PubSubClient client(mqtt_server, mqtt_port, askClient);
