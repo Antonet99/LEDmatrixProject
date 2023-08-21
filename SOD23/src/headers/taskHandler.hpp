@@ -4,8 +4,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-//void lightSensorStart();
-//void lightSensorTask(void *parameter);
+// void lightSensorStart();
+// void lightSensorTask(void *parameter);
 void getTasks(unsigned int pir_status);
 void ledMatrixTask(void *parameter);
 
@@ -15,6 +15,5 @@ void setMatrixConfig();
 uint8_t setBrightness(float lux);
 float getLux();
 void setPinPir();
-
 
 #endif
