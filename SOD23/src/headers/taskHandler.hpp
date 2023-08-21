@@ -1,6 +1,6 @@
 #ifndef TASKHANDLER_HPP
 #define TASKHANDLER_HPP
-#include "headers/constants/constTasks.hpp"
+#include "constants/constTasks.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -15,6 +15,12 @@ void setMatrixConfig();
 uint8_t setBrightness(float lux);
 float getLux();
 void setPinPir();
+void parsePayload(String payload);
+
+
+void mqttConn();
+void reconnect();
+void wifiConn();
 
 
 #endif

@@ -2,6 +2,8 @@
 #define CONSTTASKS_HPP
 #include <BH1750.h>
 #include <FastLED.h>
+#include <PubSubClient.h>
+#include <WiFi.h>
 
 #define LED_PIN 15         // pin di connessione matrice
 #define BRIGHTNESS 25
@@ -13,6 +15,10 @@
 const uint8_t kMatrixWidth = 8;
 const uint8_t kMatrixHeight = 8;
 #define NUM_LEDS (kMatrixWidth * kMatrixHeight)
+
+
+
+
 
 
 #endif

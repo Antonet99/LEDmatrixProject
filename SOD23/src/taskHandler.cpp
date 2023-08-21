@@ -5,6 +5,14 @@ CRGB leds[NUM_LEDS];
 /**
  * 
 */
+void parsePayload(String payload){
+
+
+}
+
+/**
+ * 
+*/
 void lightSensorTask(void *parameter){
     unsigned int pir_status = *(unsigned int *)parameter;
 
@@ -131,76 +139,8 @@ FastLED.clear();
 FastLED.setBrightness( 0 );
 
 }
-else {
-    /*
-leds[XY(0, 0)] = CRGB(0, 0, 0);
-leds[XY(1, 0)] = CRGB(0, 0, 0);
-leds[XY(2, 0)] = CRGB(0, 0, 0);
-leds[XY(3, 0)] = CRGB(0, 0, 0);
-leds[XY(4, 0)] = CRGB(0, 0, 0);
-leds[XY(5, 0)] = CRGB(0, 0, 0);
-leds[XY(6, 0)] = CRGB(0, 0, 0);
-leds[XY(7, 0)] = CRGB(0, 0, 0);
-leds[XY(0, 1)] = CRGB(0, 0, 0);
-leds[XY(1, 1)] = CRGB(0, 0, 0);
-leds[XY(2, 1)] = CRGB(0, 0, 0);
-leds[XY(3, 1)] = CRGB(0, 0, 0);
-leds[XY(4, 1)] = CRGB(0, 0, 0);
-leds[XY(5, 1)] = CRGB(0, 0, 0);
-leds[XY(6, 1)] = CRGB(0, 0, 0);
-leds[XY(7, 1)] = CRGB(0, 0, 0);
-leds[XY(0, 2)] = CRGB(0, 0, 0);
-leds[XY(1, 2)] = CRGB(0, 0, 0);
-leds[XY(2, 2)] = CRGB(0, 0, 0);
-leds[XY(3, 2)] = CRGB(0, 0, 0);
-leds[XY(4, 2)] = CRGB(0, 0, 0);
-leds[XY(5, 2)] = CRGB(0, 0, 0);
-leds[XY(6, 2)] = CRGB(0, 0, 0);
-leds[XY(7, 2)] = CRGB(0, 0, 0);
-leds[XY(0, 3)] = CRGB(0, 0, 0);
-leds[XY(1, 3)] = CRGB(0, 0, 0);
-leds[XY(2, 3)] = CRGB(0, 0, 0);
-leds[XY(3, 3)] = CRGB(0, 0, 0);
-leds[XY(4, 3)] = CRGB(0, 0, 0);
-leds[XY(5, 3)] = CRGB(0, 0, 0);
-leds[XY(6, 3)] = CRGB(0, 0, 0);
-leds[XY(7, 3)] = CRGB(0, 0, 0);
-leds[XY(0, 4)] = CRGB(0, 0, 0);
-leds[XY(1, 4)] = CRGB(0, 0, 0);
-leds[XY(2, 4)] = CRGB(0, 0, 0);
-leds[XY(3, 4)] = CRGB(0, 0, 0);
-leds[XY(4, 4)] = CRGB(0, 0, 0);
-leds[XY(5, 4)] = CRGB(0, 0, 0);
-leds[XY(6, 4)] = CRGB(0, 0, 0);
-leds[XY(7, 4)] = CRGB(0, 0, 0);
-leds[XY(0, 5)] = CRGB(0, 0, 0);
-leds[XY(1, 5)] = CRGB(0, 0, 0);
-leds[XY(2, 5)] = CRGB(0, 0, 0);
-leds[XY(3, 5)] = CRGB(0, 0, 0);
-leds[XY(4, 5)] = CRGB(0, 0, 0);
-leds[XY(5, 5)] = CRGB(0, 0, 0);
-leds[XY(6, 5)] = CRGB(0, 0, 0);
-leds[XY(7, 5)] = CRGB(0, 0, 0);
-leds[XY(0, 6)] = CRGB(0, 0, 0);
-leds[XY(1, 6)] = CRGB(0, 0, 0);
-leds[XY(2, 6)] = CRGB(0, 0, 0);
-leds[XY(3, 6)] = CRGB(0, 0, 0);
-leds[XY(4, 6)] = CRGB(0, 0, 0);
-leds[XY(5, 6)] = CRGB(0, 0, 0);
-leds[XY(6, 6)] = CRGB(0, 0, 0);
-leds[XY(7, 6)] = CRGB(0, 0, 0);
-leds[XY(0, 7)] = CRGB(0, 0, 0);
-leds[XY(1, 7)] = CRGB(0, 0, 0);
-leds[XY(2, 7)] = CRGB(0, 0, 0);
-leds[XY(3, 7)] = CRGB(0, 0, 0);
-leds[XY(4, 7)] = CRGB(0, 0, 0);
-leds[XY(5, 7)] = CRGB(0, 0, 0);
-leds[XY(6, 7)] = CRGB(0, 0, 0);
-leds[XY(7, 7)] = CRGB(0, 0, 0);
-*/
+else FastLED.show();
 
-FastLED.show();
-}
 
 }
 /*
