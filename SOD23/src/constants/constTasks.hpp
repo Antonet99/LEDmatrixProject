@@ -4,6 +4,7 @@
 #include <FastLED.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <ArduinoJson.h>
 
 #define LED_PIN 15         // pin di connessione matrice
 #define BRIGHTNESS 25
