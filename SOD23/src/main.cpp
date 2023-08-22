@@ -3,73 +3,82 @@
 #include <string.h>
 #include "headers/taskHandler.hpp"
 
-
 using namespace std;
 
+/**
+ * @brief Definizione delle costanti e delle variabili utilizzate nel programma.
+ */
+
+// Pin del sensore di movimento PIR
 int PIR_data = 19;
 
+// Credenziali della rete Wi-Fi
+const char *ssid = "Vodafone-A48487438";        // Nome della rete Wi-Fi
+const char *wifi_password = "psLLfEEMA4AdGhCX"; // Password della rete Wi-Fi
 
+// Topic MQTT per invio e richiesta di immagini
+const char *topic_images = "rpi/images"; // Topic per invio immagini
+const char *topic_req = "data/reqImage"; // Topic per richiesta immagini
 
-const char *ssid = "Vodafone-A48487438";    
-const char *wifi_password = "psLLfEEMA4AdGhCX";
+// Credenziali per la connessione MQTT
+const char *mqtt_username = "sod";        // Nome utente MQTT
+const char *mqtt_password = "sod23";      // Password utente MQTT
+const char *mqtt_clientID = "esp32_sod";  // ID del cliente MQTT
+const char *mqtt_server = "192.168.1.21"; // Indirizzo del server MQTT
+unsigned int mqtt_port = 1883;            // Porta del server MQTT
 
-const char* topic_images= "rpi/images";
-const char* topic_req="data/reqImage";
-
-const char *mqtt_username = "sod";                // my mqtt username
-const char *mqtt_password = "sod23";                // my mqtt password
-const char *mqtt_clientID = "esp32_sod";            // my clientID
-const char *mqtt_server = "192.168.1.21";          // my mqtt server address
-unsigned int mqtt_port = 1883;  
-
+// Oggetto WiFiClient per la comunicazione con il server MQTT
 WiFiClient askClient;
+
+// Oggetto PubSubClient per la gestione della connessione MQTT
 PubSubClient client(mqtt_server, mqtt_port, askClient);
 
 /**
- * Effettua connessione al WiFi.
-*/
+ * @brief Funzione per la connessione alla rete Wi-Fi.
+ */
 void wifiConn()
 {
-  
-  Serial.print("********** Connessione al WiFi in corso :");
-  Serial.println(ssid);
+  Serial.print("********** Connessione al WiFi in corso: ");
+  Serial.println(ssid); // Mostra il nome della rete Wi-Fi in corso di connessione
 
-  WiFi.begin(ssid, wifi_password);
+  WiFi.begin(ssid, wifi_password); // Avvia la connessione alla rete Wi-Fi
+
+  // Attendi fino a quando la connessione non viene stabilita
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("");
-  Serial.println("->Connessione al WiFi effettuata");
-  Serial.println("-> indirizzo IP: ");
-  Serial.println(WiFi.localIP());
+
+  Serial.println(""); // Stampa una riga vuota
+  Serial.println("-> Connessione al WiFi effettuata");
+  Serial.print("-> Indirizzo IP: ");
+  Serial.println(WiFi.localIP()); // Stampa l'indirizzo IP assegnato al dispositivo dopo la connessione
 }
 
-
 /**
- * Effettua connessione dell' ESP32 al server MQTT
-*/
+ * @brief Funzione per la connessione al server MQTT.
+ */
 void mqttConn()
 {
-  Serial.print("**** Connesso al server MQTT : ");
-  Serial.println(mqtt_server);
+  Serial.print("**** Connesso al server MQTT: ");
+  Serial.println(mqtt_server); // Mostra l'indirizzo del server MQTT a cui si sta connettendo
 
-  client.setServer(mqtt_server, mqtt_port);
-  reconnect();
-
-  
+  client.setServer(mqtt_server, mqtt_port); // Imposta il server MQTT e la porta
+  reconnect();                              // Richiama la funzione per gestire la riconnessione in caso di perdita di connessione
 }
 
 /**
- * Tentativo di riconnessione al server MQTT in caso di insuccesso.
-*/
+ * @brief Funzione per riconnettersi al server MQTT in caso di perdita della connessione.
+ */
 void reconnect()
 {
-  // ciclo con il quale si tenta la riconnessione
+  // Ciclo con il quale si tenta la riconnessione
   while (!client.connected())
   {
     Serial.print("********** Tentativo di connessione MQTT...");
+
+    // Si prova a connettersi al server MQTT con le credenziali fornite
     if (client.connect(mqtt_clientID, mqtt_username, mqtt_password))
     {
       Serial.println("-> client MQTT connesso");
@@ -77,80 +86,91 @@ void reconnect()
     else
     {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(client.state()); // Mostra lo stato attuale del client MQTT
       Serial.println("-> nuovo tentativo fra 5 secondi");
-      delay(5000);
+      delay(5000); // Attende 5 secondi prima di un nuovo tentativo
     }
   }
 }
 
 /**
- * Funzione di callback utilizzata per verificare la corretta ricezione dei dati 
+ * Funzione di callback utilizzata per verificare la corretta ricezione dei dati
  * ed il payload con le informazioni.
  * @param topic topic dal quale vengono ricevuti i dati (topic su cui è stato effettuato il subscribe)
  * @param payload dati effettivi ricevuti dal topic
  * @param lenght lunghezza del messaggio.
-*/
+ */
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  char* message = new char[length];
+  char *message = new char[length];
   Serial.print("Messaggio ricevuto dal topic : ");
   Serial.print(topic);
   Serial.print('\n');
   String s = "";
-  for (int i=0;i<length;i++) {
-    
-   //Serial.print((char)payload[i]);
-    s = s + String ((char) payload[i]);
+  for (int i = 0; i < length; i++)
+  {
+
+    // Serial.print((char)payload[i]);
+    s = s + String((char)payload[i]);
   }
   Serial.print(s);
   Serial.print('\n');
   parsePayload(s);
 
-  //if(topic == topic_images) Serial.println((char*) payload);
-  //else Serial.println("NESSUN SUBSCRIBE");
-   
+  // if(topic == topic_images) Serial.println((char*) payload);
+  // else Serial.println("NESSUN SUBSCRIBE");
 }
 
 /**
- * 
-*/
-
+ * @brief Funzione di configurazione iniziale eseguita all'avvio.
+ */
 void setup()
 {
-  
   Serial.begin(9600);
-  // connessione Wifi e MQTT
-    wifiConn();
-    mqttConn();
 
-    pinMode(PIR_data, INPUT);
-  // configurazione di base della matrice led
-    //setMatrixConfig();
+  // Connessione WiFi e MQTT
+  wifiConn();
+  mqttConn();
 
-    client.setServer(mqtt_server, mqtt_port);
-    client.connect(mqtt_clientID, mqtt_username, mqtt_password);
-   
-    client.setCallback(callback);
-    client.publish(topic_req,"immagine 1");
-   client.subscribe(topic_images);
+  pinMode(PIR_data, INPUT);
 
-    Wire.begin();
-    
-  
-   
+  // Configurazione di base della matrice LED
+  // setMatrixConfig();
+
+  // Impostazioni del client MQTT
+  client.setServer(mqtt_server, mqtt_port);
+  client.connect(mqtt_clientID, mqtt_username, mqtt_password);
+
+  // Impostazione della callback per la gestione dei messaggi MQTT
+  client.setCallback(callback);
+
+  // Pubblicazione di un messaggio sul topic di richiesta immagini
+  client.publish(topic_req, "immagine 1");
+
+  // Sottoscrizione al topic delle immagini
+  client.subscribe(topic_images);
+
+  // Inizializzazione della comunicazione I2C
+  Wire.begin();
 }
 
+/**
+ * @brief Funzione principale che viene eseguita in loop continuo.
+ */
 void loop()
 {
+  // Mantieni attiva la connessione MQTT e gestisci i messaggi in entrata
   client.loop();
-  
 
+  // Leggi lo stato del sensore PIR
+  bool pir_status = digitalRead(PIR_data);
 
-   bool pir_status = digitalRead(PIR_data);
-    //pir_status ? Serial.println("MOVIMENTO RILEVATO") : Serial.println("NESSUN MOVIMENTO RILEVATO...");
-    unsigned int pir_value = (int) pir_status;
-    //getTasks(pir_value);
-    delay(8000);
+  // Trasforma lo stato del PIR in un valore intero (0 o 1)
+  unsigned int pir_value = static_cast<unsigned int>(pir_status);
 
+  // Esegui le attività corrispondenti allo stato del PIR
+  // getTasks(pir_value);
+
+  // Ritardo di 8 secondi prima della successiva iterazione
+  delay(8000);
 }

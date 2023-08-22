@@ -9,47 +9,58 @@ void parsePayload(String payload)
 {
 }
 
-// Task per gestire il sensore di luminosità
+/**
+ * @brief Task per gestire il sensore di luminosità in base allo stato del sensore di movimento PIR.
+ *
+ * Questo task legge lo stato del sensore di movimento PIR passato come parametro e, se attivo, legge
+ * la luminosità utilizzando la funzione `getLux`. Successivamente, imposta la luminosità della matrice
+ * LED in base al valore letto e stampa il valore di luminosità sulla porta seriale. Se il sensore di
+ * movimento PIR è disattivo, stampa un messaggio appropriato. Infine, il task si autodistrugge.
+ *
+ * @param parameter Puntatore all'intero che rappresenta lo stato del sensore di movimento PIR.
+ */
 void lightSensorTask(void *parameter)
 {
-    // Legge lo stato del sensore di movimento
     unsigned int pir_status = *(unsigned int *)parameter;
 
-    // Se il sensore di movimento è attivo
     if (pir_status)
     {
-        // Ottiene la luminosità e imposta la luminosità dei LED
         float lux = getLux();
         FastLED.setBrightness(setBrightness(lux));
 
-        // Stampa la luminosità sulla porta seriale
         Serial.println("Brightness: " + String(setBrightness(lux)));
     }
     else
     {
-        // Stampa un messaggio sulla porta seriale indicando che il sensore di luminosità è spento
-        Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
+        Serial.println("Sensore di luminosità spento (movimento non rilevato)");
     }
-    // Cancella il task corrente
-    vTaskDelete(NULL);
-}
-
-// Task per gestire la matrice LED
-void ledMatrixTask(void *parameter)
-{
-    // Legge lo stato del sensore di movimento e imposta i colori della matrice LED
-    unsigned int pir_status = *(unsigned int *)parameter;
-    setColors(pir_status);
-
-    // Cancella il task corrente
     vTaskDelete(NULL);
 }
 
 /**
- * Crea due task per gestire sensore di luminosità e matrice LED.
- * Argomento: stato del sensore di movimento.
- * La funzione chiama la funzione xTaskCreate per creare il task lightSensorTask con priorità 1 e il task ledMatrixTask con priorità 2.
- * Entrambi i task ricevono lo stato del sensore di movimento come parametro.
+ * @brief Task per gestire la matrice LED in base allo stato del sensore di movimento PIR.
+ *
+ * Questo task legge lo stato del sensore di movimento PIR passato come parametro e imposta i colori
+ * della matrice LED di conseguenza utilizzando la funzione `setColors`. Dopo aver completato il suo
+ * compito, il task si autodistrugge.
+ *
+ * @param parameter Puntatore all'intero che rappresenta lo stato del sensore di movimento PIR.
+ */
+void ledMatrixTask(void *parameter)
+{
+    unsigned int pir_status = *(unsigned int *)parameter;
+    setColors(pir_status);
+
+    vTaskDelete(NULL);
+}
+
+/**
+ * @brief Crea e avvia i task per gestire il sensore di luminosità e la matrice LED.
+ *
+ * Questa funzione crea due task: uno per gestire il sensore di luminosità e uno per gestire la matrice LED.
+ * I task vengono creati con le priorità specificate e i parametri necessari vengono passati come puntatori.
+ *
+ * @param pir_status Lo stato del sensore di movimento PIR.
  */
 void getTasks(unsigned int pir_status)
 {
@@ -60,14 +71,23 @@ void getTasks(unsigned int pir_status)
     xTaskCreate(ledMatrixTask, "MOTION_TASK", 10000, (void *)&pir_status, 2, NULL);
 }
 
+/**
+ * @brief Funzione per mappare le coordinate (x, y) su un indice di LED.
+ *
+ * @param x La coordinata x del LED nella matrice.
+ * @param y La coordinata y del LED nella matrice.
+ *
+ * @return L'indice corrispondente all'array di LED.
+ */
 uint8_t XY(uint8_t x, uint8_t y)
 {
-    // any out of bounds address maps to the first hidden pixel
+    // Verifica se le coordinate sono fuori dai limiti della matrice
     if ((x >= kMatrixWidth) || (y >= kMatrixHeight))
     {
         return (LAST_VISIBLE_LED + 1);
     }
 
+    // Tabella di mappatura degli indici di LED
     const uint8_t XYTable[] = {
         56, 48, 40, 32, 24, 16, 8, 0,
         57, 49, 41, 33, 25, 17, 9, 1,
@@ -78,16 +98,26 @@ uint8_t XY(uint8_t x, uint8_t y)
         62, 54, 46, 38, 30, 22, 14, 6,
         63, 55, 47, 39, 31, 23, 15, 7};
 
+    // Calcola l'indice basato sulle coordinate
     uint8_t i = (y * kMatrixWidth) + x;
     uint8_t j = XYTable[i];
     return j;
 }
 
+/**
+ * @brief Imposta i colori dei LED in base allo stato del sensore PIR.
+ *
+ * Questa funzione imposta i colori dei LED sulla matrice in base allo stato del sensore PIR.
+ * Se il sensore PIR rileva movimento, vengono impostati dei colori specifici per i LED.
+ *
+ * @param pir_status Lo stato del sensore PIR: 1 se rileva movimento, 0 altrimenti.
+ */
 void setColors(int pir_status)
 {
 
     if (pir_status)
     {
+        // Imposta i colori dei LED in base allo schema fornito
         leds[XY(0, 0)] = CRGB(255, 255, 0);
         leds[XY(1, 0)] = CRGB(255, 255, 0);
         leds[XY(2, 0)] = CRGB(255, 255, 0);
@@ -152,40 +182,37 @@ void setColors(int pir_status)
         leds[XY(5, 7)] = CRGB(255, 255, 0);
         leds[XY(6, 7)] = CRGB(255, 255, 0);
         leds[XY(7, 7)] = CRGB(255, 255, 0);
+
+        // Mostra i colori impostati
         FastLED.show();
+        // Cancella i colori e spegni i LED
         FastLED.clear();
+        // Imposta la luminosità a 0 per spegnere completamente i LED
         FastLED.setBrightness(0);
     }
     else
         FastLED.show();
 }
-/*
- *
- */
 
+/**
+ * @brief Configura la matrice LED utilizzando FastLED.
+ *
+ * Questa funzione configura la matrice LED utilizzando la libreria FastLED.
+ * Viene specificato il tipo di chipset, il pin di collegamento dei LED, l'ordine dei colori
+ * e il puntatore all'array dei LED. Inoltre, viene applicata una correzione tipica per i LED SMD5050.
+ */
 void setMatrixConfig()
 {
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
 }
-/*
+
+/**
+ * @brief Imposta la luminosità dei LED in base alla luminosità rilevata dal sensore di luminosità.
  *
+ * @param lux La luminosità rilevata dal sensore di luminosità.
+ *
+ * @return La luminosità da impostare per i LED.
  */
-
-/*uint8_t setBrightness(float lux)
-{
-    uint8_t brightness = 0;
-    if (lux > 0 && lux < 40)
-        brightness = 2;
-    else if (lux > 40 && lux < 120)
-        brightness = 50;
-    else if (lux > 120 && lux < 200)
-        brightness = 100;
-    else if (lux > 200 && lux < 300)
-        brightness = 180;
-    return brightness;
-}
-*/
-
 uint8_t setBrightness(float lux)
 {
     uint8_t brightness = 0;
@@ -211,8 +238,10 @@ uint8_t setBrightness(float lux)
     return brightness;
 }
 
-/*
+/**
+ * @brief Ottiene il livello di illuminazione in lux dal sensore di luminosità.
  *
+ * @return Il livello di illuminazione in lux.
  */
 float getLux()
 {
