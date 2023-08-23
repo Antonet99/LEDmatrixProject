@@ -1,13 +1,60 @@
 #include "headers/taskHandler.hpp"
+
+const char* topic_images= "rpi/images";
+const char* topic_req="data/reqImage";
+const char *ssid = "Vodafone-A48487438";    
+const char *wifi_password = "psLLfEEMA4AdGhCX";
+
+
+const char *mqtt_username = "sod";                // my mqtt username
+const char *mqtt_password = "sod23";                // my mqtt password
+const char *mqtt_clientID = "esp32_sod"; 
+const char *mqtt_server = "192.168.1.3";          // my mqtt server address
+unsigned int mqtt_port = 1883;  
+vector<string> colors;
 BH1750 lightMeter;
 CRGB leds[NUM_LEDS];
+WiFiClient askClient;
+PubSubClient client(mqtt_server, mqtt_port, askClient);           // my clientID
 
 /**
  *
  */
-void parsePayload(String payload)
+void parsePayload(vector<string> payload)
 {
-}
+    Serial.println("dentro il parser");
+    string data = "";
+
+    int countColors = 0;
+    Serial.println(payload.size());
+  
+    for(int i = 0; i < 8; i++){
+        for(int j = 0; j < 8; j++){
+            string s = payload[countColors];
+            string a = s.replace(0,5,"");
+            
+
+            const char* n1 = s.substr(0,a.find_first_of(",")).c_str();
+            string replace1 = a.replace(0,a.find_first_of(",")+1,"");
+            Serial.println("numero 1 : ");
+            Serial.println(n1);
+            const char * n2 = replace1.substr(0,replace1.find_first_of(",")).c_str(); 
+             Serial.println("numero 2 : ");
+            Serial.println(n2);
+            string replace2 = replace1.replace(0,replace1.find_first_of(",")+1,"");
+            string replace3 = replace2.replace(replace2.find_first_of(")"),1,"");
+            const char * n3 = replace3.substr(0).c_str(); 
+            Serial.println("numero 3 : ");
+            Serial.println(n3);
+            leds[XY(j,i)] = CRGB((unsigned int) n1, (unsigned int) n2, (unsigned int) n3);
+            countColors++;
+            }
+           
+        }
+        FastLED.setBrightness(10);
+        FastLED.show();
+        
+    }
 
 // Task per gestire il sensore di luminosità
 void lightSensorTask(void *parameter)
@@ -27,14 +74,15 @@ void lightSensorTask(void *parameter)
     }
     else
     {
-        // Stampa un messaggio sulla porta seriale indicando che il sensore di luminosità è spento
         Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
     }
     // Cancella il task corrente
     vTaskDelete(NULL);
 }
 
-// Task per gestire la matrice LED
+/**
+ * 
+*/
 void ledMatrixTask(void *parameter)
 {
     // Legge lo stato del sensore di movimento e imposta i colori della matrice LED
@@ -43,6 +91,14 @@ void ledMatrixTask(void *parameter)
 
     // Cancella il task corrente
     vTaskDelete(NULL);
+}
+void imageRequestTask(){
+   client.publish(topic_req,"immagine 1");   
+    client.setCallback(callback);
+     client.subscribe(topic_images);
+
+  
+
 }
 
 /**
@@ -53,16 +109,15 @@ void ledMatrixTask(void *parameter)
  */
 void getTasks(unsigned int pir_status)
 {
-    // Crea il task per gestire il sensore di luminosità con priorità 1
-    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, (void *)&pir_status, 1, NULL);
-
-    // Crea il task per gestire la matrice LED con priorità 2
-    xTaskCreate(ledMatrixTask, "MOTION_TASK", 10000, (void *)&pir_status, 2, NULL);
+  
+   xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, (void *)&pir_status, 2, NULL);
+   xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, (void *)&pir_status, 3, NULL);
 }
-
+/**
+ * 
+*/
 uint8_t XY(uint8_t x, uint8_t y)
 {
-    // any out of bounds address maps to the first hidden pixel
     if ((x >= kMatrixWidth) || (y >= kMatrixHeight))
     {
         return (LAST_VISIBLE_LED + 1);
@@ -88,81 +143,16 @@ void setColors(int pir_status)
 
     if (pir_status)
     {
-        leds[XY(0, 0)] = CRGB(255, 255, 0);
-        leds[XY(1, 0)] = CRGB(255, 255, 0);
-        leds[XY(2, 0)] = CRGB(255, 255, 0);
-        leds[XY(3, 0)] = CRGB(35, 78, 29);
-        leds[XY(4, 0)] = CRGB(35, 78, 29);
-        leds[XY(5, 0)] = CRGB(35, 78, 29);
-        leds[XY(6, 0)] = CRGB(255, 255, 0);
-        leds[XY(7, 0)] = CRGB(255, 255, 0);
-        leds[XY(0, 1)] = CRGB(255, 255, 0);
-        leds[XY(1, 1)] = CRGB(255, 255, 0);
-        leds[XY(2, 1)] = CRGB(20, 160, 0);
-        leds[XY(3, 1)] = CRGB(20, 160, 0);
-        leds[XY(4, 1)] = CRGB(35, 78, 29);
-        leds[XY(5, 1)] = CRGB(153, 119, 76);
-        leds[XY(6, 1)] = CRGB(255, 255, 0);
-        leds[XY(7, 1)] = CRGB(255, 255, 0);
-        leds[XY(0, 2)] = CRGB(255, 255, 0);
-        leds[XY(1, 2)] = CRGB(20, 160, 0);
-        leds[XY(2, 2)] = CRGB(20, 160, 0);
-        leds[XY(3, 2)] = CRGB(20, 160, 0);
-        leds[XY(4, 2)] = CRGB(20, 160, 0);
-        leds[XY(5, 2)] = CRGB(20, 160, 0);
-        leds[XY(6, 2)] = CRGB(20, 160, 0);
-        leds[XY(7, 2)] = CRGB(20, 160, 0);
-        leds[XY(0, 3)] = CRGB(20, 160, 0);
-        leds[XY(1, 3)] = CRGB(255, 255, 0);
-        leds[XY(2, 3)] = CRGB(20, 160, 0);
-        leds[XY(3, 3)] = CRGB(0, 0, 0);
-        leds[XY(4, 3)] = CRGB(20, 160, 0);
-        leds[XY(5, 3)] = CRGB(0, 0, 0);
-        leds[XY(6, 3)] = CRGB(0, 0, 0);
-        leds[XY(7, 3)] = CRGB(20, 160, 0);
-        leds[XY(0, 4)] = CRGB(20, 160, 0);
-        leds[XY(1, 4)] = CRGB(20, 160, 0);
-        leds[XY(2, 4)] = CRGB(0, 0, 0);
-        leds[XY(3, 4)] = CRGB(0, 0, 0);
-        leds[XY(4, 4)] = CRGB(20, 160, 0);
-        leds[XY(5, 4)] = CRGB(20, 160, 0);
-        leds[XY(6, 4)] = CRGB(20, 160, 0);
-        leds[XY(7, 4)] = CRGB(20, 160, 0);
-        leds[XY(0, 5)] = CRGB(20, 160, 0);
-        leds[XY(1, 5)] = CRGB(255, 255, 0);
-        leds[XY(2, 5)] = CRGB(20, 160, 0);
-        leds[XY(3, 5)] = CRGB(0, 0, 0);
-        leds[XY(4, 5)] = CRGB(20, 160, 0);
-        leds[XY(5, 5)] = CRGB(0, 0, 0);
-        leds[XY(6, 5)] = CRGB(0, 0, 0);
-        leds[XY(7, 5)] = CRGB(20, 160, 0);
-        leds[XY(0, 6)] = CRGB(255, 255, 0);
-        leds[XY(1, 6)] = CRGB(20, 160, 0);
-        leds[XY(2, 6)] = CRGB(20, 160, 0);
-        leds[XY(3, 6)] = CRGB(20, 160, 0);
-        leds[XY(4, 6)] = CRGB(20, 160, 0);
-        leds[XY(5, 6)] = CRGB(20, 160, 0);
-        leds[XY(6, 6)] = CRGB(20, 160, 0);
-        leds[XY(7, 6)] = CRGB(20, 160, 0);
-        leds[XY(0, 7)] = CRGB(255, 255, 0);
-        leds[XY(1, 7)] = CRGB(255, 255, 0);
-        leds[XY(2, 7)] = CRGB(20, 160, 0);
-        leds[XY(3, 7)] = CRGB(20, 160, 0);
-        leds[XY(4, 7)] = CRGB(35, 78, 29);
-        leds[XY(5, 7)] = CRGB(255, 255, 0);
-        leds[XY(6, 7)] = CRGB(255, 255, 0);
-        leds[XY(7, 7)] = CRGB(255, 255, 0);
         FastLED.show();
         FastLED.clear();
         FastLED.setBrightness(0);
     }
-    else
-        FastLED.show();
+    else FastLED.show();
 }
+
 /*
  *
  */
-
 void setMatrixConfig()
 {
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
@@ -170,21 +160,6 @@ void setMatrixConfig()
 /*
  *
  */
-
-/*uint8_t setBrightness(float lux)
-{
-    uint8_t brightness = 0;
-    if (lux > 0 && lux < 40)
-        brightness = 2;
-    else if (lux > 40 && lux < 120)
-        brightness = 50;
-    else if (lux > 120 && lux < 200)
-        brightness = 100;
-    else if (lux > 200 && lux < 300)
-        brightness = 180;
-    return brightness;
-}
-*/
 
 uint8_t setBrightness(float lux)
 {
@@ -221,4 +196,104 @@ float getLux()
     String message = "Luminosità rilevata: " + String(lux);
     Serial.println(message);
     return lux;
+}
+
+void mqttConn()
+{
+  Serial.print("**** Connesso al server MQTT : ");
+  Serial.println(mqtt_server);
+
+  client.setServer(mqtt_server, mqtt_port);
+  reconnect();
+
+  
+}
+
+/**
+ * Tentativo di riconnessione al server MQTT in caso di insuccesso.
+*/
+void reconnect()
+{
+  // ciclo con il quale si tenta la riconnessione
+  while (!client.connected())
+  {
+    Serial.print("********** Tentativo di connessione MQTT...");
+    if (client.connect(mqtt_clientID, mqtt_username, mqtt_password))
+    {
+      Serial.println("-> client MQTT connesso");
+    }
+    else
+    {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println("-> nuovo tentativo fra 5 secondi");
+      delay(5000);
+    }
+  }
+}
+void wifiConn()
+{
+  
+  Serial.print("********** Connessione al WiFi in corso :");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, wifi_password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("->Connessione al WiFi effettuata");
+  Serial.println("-> indirizzo IP: ");
+  Serial.println(WiFi.localIP());
+}
+/**
+ * 
+*/
+void initPubSub(){
+
+    client.setServer(mqtt_server, mqtt_port);
+    client.connect(mqtt_clientID, mqtt_username, mqtt_password);
+}
+/**
+ * Funzione di callback utilizzata per verificare la corretta ricezione dei dati 
+ * ed il payload con le informazioni.
+ * @param topic topic dal quale vengono ricevuti i dati (topic su cui è stato effettuato il subscribe)
+ * @param payload dati effettivi ricevuti dal topic
+ * @param lenght lunghezza del messaggio.
+*/
+void callback(char *topic, byte *payload, unsigned int length)
+{
+  char* message = new char[length];
+  Serial.print("Messaggio ricevuto dal topic : ");
+  Serial.print(topic);
+  Serial.print('\n');
+  string s = "";
+  //string strTot = "";
+  
+  for (int i=0;i<length;i++) {
+   Serial.print((char)payload[i]);
+    s = s + (char) payload[i];
+  }
+
+  if(s == "fine"){
+   parsePayload(colors);
+  }
+  else{ 
+  colors.push_back(s);
+  Serial.print('\n');
+  
+  }
+  
+  
+  //if(topic == topic_images) Serial.println((char*) payload);
+  //else Serial.println("NESSUN SUBSCRIBE");
+   
+}
+/**
+ * 
+*/
+void clientLoop(){
+    client.loop();
 }
