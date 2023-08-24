@@ -1,21 +1,20 @@
 #include "headers/taskHandler.hpp"
 
-const char* topic_images= "rpi/images";
-const char* topic_req="data/reqImage";
-const char *ssid = "Vodafone-A48487438";    
+const char *topic_images = "rpi/images";
+const char *topic_req = "data/reqImage";
+const char *ssid = "Vodafone-A48487438";
 const char *wifi_password = "psLLfEEMA4AdGhCX";
 
-
-const char *mqtt_username = "sod";                // my mqtt username
-const char *mqtt_password = "sod23";                // my mqtt password
-const char *mqtt_clientID = "esp32_sod"; 
-const char *mqtt_server = "192.168.1.3";          // my mqtt server address
-unsigned int mqtt_port = 1883;  
+const char *mqtt_username = "sod";   // my mqtt username
+const char *mqtt_password = "sod23"; // my mqtt password
+const char *mqtt_clientID = "esp32_sod";
+const char *mqtt_server = "192.168.1.3"; // my mqtt server address
+unsigned int mqtt_port = 1883;
 vector<string> colors;
 BH1750 lightMeter;
 CRGB leds[NUM_LEDS];
 WiFiClient askClient;
-PubSubClient client(mqtt_server, mqtt_port, askClient);           // my clientID
+PubSubClient client(mqtt_server, mqtt_port, askClient); // my clientID
 
 /**
  *
@@ -27,34 +26,34 @@ void parsePayload(vector<string> payload)
 
     int countColors = 0;
     Serial.println(payload.size());
-  
-    for(int i = 0; i < 8; i++){
-        for(int j = 0; j < 8; j++){
-            string s = payload[countColors];
-            string a = s.replace(0,5,"");
-            
 
-            const char* n1 = s.substr(0,a.find_first_of(",")).c_str();
-            string replace1 = a.replace(0,a.find_first_of(",")+1,"");
+    for (int i = 0; i < 8; i++)
+    {
+        for (int j = 0; j < 8; j++)
+        {
+            string s = payload[countColors];
+            string a = s.replace(0, 5, "");
+
+            const char *n1 = s.substr(0, a.find_first_of(",")).c_str();
+            string replace1 = a.replace(0, a.find_first_of(",") + 1, "");
             Serial.println("numero 1 : ");
             Serial.println(n1);
-            const char * n2 = replace1.substr(0,replace1.find_first_of(",")).c_str(); 
-             Serial.println("numero 2 : ");
+            const char *n2 = replace1.substr(0, replace1.find_first_of(",")).c_str();
+            Serial.println("numero 2 : ");
             Serial.println(n2);
-            string replace2 = replace1.replace(0,replace1.find_first_of(",")+1,"");
-            string replace3 = replace2.replace(replace2.find_first_of(")"),1,"");
-            const char * n3 = replace3.substr(0).c_str(); 
+            string replace2 = replace1.replace(0, replace1.find_first_of(",") + 1, "");
+            string replace3 = replace2.replace(replace2.find_first_of(")"), 1, "");
+            const char *n3 = replace3.substr(0).c_str();
             Serial.println("numero 3 : ");
             Serial.println(n3);
-            leds[XY(j,i)] = CRGB((unsigned int) n1, (unsigned int) n2, (unsigned int) n3);
+            leds[XY(j, i)] = CRGB((uint8_t)atoi(n1), (uint8_t)atoi(n2), (uint8_t)atoi(n3));
             countColors++;
-            }
-           
         }
-        FastLED.setBrightness(10);
-        FastLED.show();
-        
     }
+
+    // Cancella il task corrente
+    vTaskDelete(NULL);
+}
 
 // Task per gestire il sensore di luminosità
 void lightSensorTask(void *parameter)
@@ -62,43 +61,53 @@ void lightSensorTask(void *parameter)
     // Legge lo stato del sensore di movimento
     unsigned int pir_status = *(unsigned int *)parameter;
 
-    // Se il sensore di movimento è attivo
-    if (pir_status)
+    for (;;)
     {
-        // Ottiene la luminosità e imposta la luminosità dei LED
-        float lux = getLux();
-        FastLED.setBrightness(setBrightness(lux));
+        // Se il sensore di movimento è attivo
+        if (pir_status)
+        {
+            // Ottiene la luminosità e imposta la luminosità dei LED
+            float lux = getLux();
+            FastLED.setBrightness(setBrightness(lux));
 
-        // Stampa la luminosità sulla porta seriale
-        Serial.println("Brightness: " + String(setBrightness(lux)));
-    }
-    else
-    {
-        Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
+            // Stampa la luminosità sulla porta seriale
+            Serial.println("Brightness: " + String(setBrightness(lux)));
+        }
+        else
+        {
+            Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
+        }
+        vTaskDelay(5000);
     }
     // Cancella il task corrente
     vTaskDelete(NULL);
 }
 
 /**
- * 
-*/
+ *
+ */
 void ledMatrixTask(void *parameter)
 {
     // Legge lo stato del sensore di movimento e imposta i colori della matrice LED
     unsigned int pir_status = *(unsigned int *)parameter;
-    setColors(pir_status);
+    // setColors(pir_status);
 
     // Cancella il task corrente
     vTaskDelete(NULL);
 }
-void imageRequestTask(){
-   client.publish(topic_req,"immagine 1");   
+void imageRequestTask(void *parameter)
+{
+    unsigned int pir_status = *(unsigned int *)parameter;
+    for (;;)
+    {
+        client.publish(topic_req, "immagine1");
+
+        setColors(pir_status);
+        vTaskDelay(5000);
+    }
     client.setCallback(callback);
-     client.subscribe(topic_images);
-
-  
-
+    client.subscribe(topic_images);
+    vTaskDelete(NULL);
 }
 
 /**
@@ -109,13 +118,13 @@ void imageRequestTask(){
  */
 void getTasks(unsigned int pir_status)
 {
-  
-   xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, (void *)&pir_status, 2, NULL);
-   xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, (void *)&pir_status, 3, NULL);
+    xTaskCreate(imageRequestTask, "IMAGE_REQUEST_TASK", 10000, (void *)&pir_status, 1, NULL);
+    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, (void *)&pir_status, 2, NULL);
+    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, (void *)&pir_status, 3, NULL);
 }
 /**
- * 
-*/
+ *
+ */
 uint8_t XY(uint8_t x, uint8_t y)
 {
     if ((x >= kMatrixWidth) || (y >= kMatrixHeight))
@@ -145,9 +154,9 @@ void setColors(int pir_status)
     {
         FastLED.show();
         FastLED.clear();
-        FastLED.setBrightness(0);
     }
-    else FastLED.show();
+    else
+        FastLED.show();
 }
 
 /*
@@ -200,100 +209,100 @@ float getLux()
 
 void mqttConn()
 {
-  Serial.print("**** Connesso al server MQTT : ");
-  Serial.println(mqtt_server);
+    Serial.print("**** Connesso al server MQTT : ");
+    Serial.println(mqtt_server);
 
-  client.setServer(mqtt_server, mqtt_port);
-  reconnect();
-
-  
+    client.setServer(mqtt_server, mqtt_port);
+    reconnect();
 }
 
 /**
  * Tentativo di riconnessione al server MQTT in caso di insuccesso.
-*/
+ */
 void reconnect()
 {
-  // ciclo con il quale si tenta la riconnessione
-  while (!client.connected())
-  {
-    Serial.print("********** Tentativo di connessione MQTT...");
-    if (client.connect(mqtt_clientID, mqtt_username, mqtt_password))
+    // ciclo con il quale si tenta la riconnessione
+    while (!client.connected())
     {
-      Serial.println("-> client MQTT connesso");
+        Serial.print("********** Tentativo di connessione MQTT...");
+        if (client.connect(mqtt_clientID, mqtt_username, mqtt_password))
+        {
+            Serial.println("-> client MQTT connesso");
+        }
+        else
+        {
+            Serial.print("failed, rc=");
+            Serial.print(client.state());
+            Serial.println("-> nuovo tentativo fra 5 secondi");
+            delay(5000);
+        }
     }
-    else
-    {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println("-> nuovo tentativo fra 5 secondi");
-      delay(5000);
-    }
-  }
 }
 void wifiConn()
 {
-  
-  Serial.print("********** Connessione al WiFi in corso :");
-  Serial.println(ssid);
 
-  WiFi.begin(ssid, wifi_password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.println("->Connessione al WiFi effettuata");
-  Serial.println("-> indirizzo IP: ");
-  Serial.println(WiFi.localIP());
+    Serial.print("********** Connessione al WiFi in corso :");
+    Serial.println(ssid);
+
+    WiFi.begin(ssid, wifi_password);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+    }
+    Serial.println("");
+    Serial.println("->Connessione al WiFi effettuata");
+    Serial.println("-> indirizzo IP: ");
+    Serial.println(WiFi.localIP());
 }
 /**
- * 
-*/
-void initPubSub(){
+ *
+ */
+void initPubSub()
+{
 
     client.setServer(mqtt_server, mqtt_port);
     client.connect(mqtt_clientID, mqtt_username, mqtt_password);
 }
 /**
- * Funzione di callback utilizzata per verificare la corretta ricezione dei dati 
+ * Funzione di callback utilizzata per verificare la corretta ricezione dei dati
  * ed il payload con le informazioni.
  * @param topic topic dal quale vengono ricevuti i dati (topic su cui è stato effettuato il subscribe)
  * @param payload dati effettivi ricevuti dal topic
  * @param lenght lunghezza del messaggio.
-*/
+ */
 void callback(char *topic, byte *payload, unsigned int length)
 {
-  char* message = new char[length];
-  Serial.print("Messaggio ricevuto dal topic : ");
-  Serial.print(topic);
-  Serial.print('\n');
-  string s = "";
-  //string strTot = "";
-  
-  for (int i=0;i<length;i++) {
-   Serial.print((char)payload[i]);
-    s = s + (char) payload[i];
-  }
+    char *message = new char[length];
+    Serial.print("Messaggio ricevuto dal topic : ");
+    Serial.print(topic);
+    Serial.print('\n');
+    string s = "";
+    // string strTot = "";
 
-  if(s == "fine"){
-   parsePayload(colors);
-  }
-  else{ 
-  colors.push_back(s);
-  Serial.print('\n');
-  
-  }
-  
-  
-  //if(topic == topic_images) Serial.println((char*) payload);
-  //else Serial.println("NESSUN SUBSCRIBE");
-   
+    for (int i = 0; i < length; i++)
+    {
+        Serial.print((char)payload[i]);
+        s = s + (char)payload[i];
+    }
+
+    if (s == "fine")
+    {
+        parsePayload(colors);
+    }
+    else
+    {
+        colors.push_back(s);
+        Serial.print('\n');
+    }
+
+    // if(topic == topic_images) Serial.println((char*) payload);
+    // else Serial.println("NESSUN SUBSCRIBE");
 }
 /**
- * 
-*/
-void clientLoop(){
+ *
+ */
+void clientLoop()
+{
     client.loop();
 }

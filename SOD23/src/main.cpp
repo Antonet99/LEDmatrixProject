@@ -22,11 +22,15 @@ void setup()
   
   // configurazione di base della matrice led
     initPubSub();
+    //imageRequestTask();
     setMatrixConfig();
-    imageRequestTask();
+   
     
     Wire.begin();
-   
+    bool pir_status = digitalRead(PIR_data);
+    pir_status ? Serial.println("MOVIMENTO RILEVATO") : Serial.println("NESSUN MOVIMENTO RILEVATO...");
+    unsigned int pir_value = (int) pir_status;
+    getTasks(pir_value);
     
   
    
@@ -38,10 +42,9 @@ void loop()
   
 
 
-   bool pir_status = digitalRead(PIR_data);
-    //pir_status ? Serial.println("MOVIMENTO RILEVATO") : Serial.println("NESSUN MOVIMENTO RILEVATO...");
-   // unsigned int pir_value = (int) pir_status;
-    //getTasks(pir_value);
+  
+
+ 
     
 
 }
