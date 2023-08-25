@@ -8,9 +8,11 @@
 
 //void lightSensorStart();
 //void lightSensorTask(void *parameter);
-void getTasks(unsigned int pir_status);
+void getTasks();
 void ledMatrixTask(void *parameter);
-void imageRequestTask(void* parameter); 
+void imageRequestTask() ; 
+void pirStatusTask(void* parameter);
+void lightSensorTask(void* parameter);
 uint8_t XY(uint8_t x, uint8_t y);
 void setColors(int pir_status);
 void setMatrixConfig();

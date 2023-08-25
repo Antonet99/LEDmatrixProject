@@ -4,12 +4,13 @@ const char *topic_images = "rpi/images";
 const char *topic_req = "data/reqImage";
 const char *ssid = "Vodafone-A48487438";
 const char *wifi_password = "psLLfEEMA4AdGhCX";
-
+unsigned int pir_value = 0;
 const char *mqtt_username = "sod";   // my mqtt username
 const char *mqtt_password = "sod23"; // my mqtt password
 const char *mqtt_clientID = "esp32_sod";
 const char *mqtt_server = "192.168.1.3"; // my mqtt server address
 unsigned int mqtt_port = 1883;
+
 vector<string> colors;
 BH1750 lightMeter;
 CRGB leds[NUM_LEDS];
@@ -26,58 +27,66 @@ void parsePayload(vector<string> payload)
 
     int countColors = 0;
     Serial.println(payload.size());
-
-    for (int i = 0; i < 8; i++)
+    if (payload.size() != 0)
     {
-        for (int j = 0; j < 8; j++)
+        for (int i = 0; i < 8; i++)
         {
-            string s = payload[countColors];
-            string a = s.replace(0, 5, "");
+            for (int j = 0; j < 8; j++)
+            {
+                string s = payload[countColors];
+                string a = s.replace(0, 5, "");
 
-            const char *n1 = s.substr(0, a.find_first_of(",")).c_str();
-            string replace1 = a.replace(0, a.find_first_of(",") + 1, "");
-            Serial.println("numero 1 : ");
-            Serial.println(n1);
-            const char *n2 = replace1.substr(0, replace1.find_first_of(",")).c_str();
-            Serial.println("numero 2 : ");
-            Serial.println(n2);
-            string replace2 = replace1.replace(0, replace1.find_first_of(",") + 1, "");
-            string replace3 = replace2.replace(replace2.find_first_of(")"), 1, "");
-            const char *n3 = replace3.substr(0).c_str();
-            Serial.println("numero 3 : ");
-            Serial.println(n3);
-            leds[XY(j, i)] = CRGB((uint8_t)atoi(n1), (uint8_t)atoi(n2), (uint8_t)atoi(n3));
-            countColors++;
+                const char *n1 = s.substr(0, a.find_first_of(",")).c_str();
+                string replace1 = a.replace(0, a.find_first_of(",") + 1, "");
+                Serial.println("numero 1 : ");
+                Serial.println(n1);
+                const char *n2 = replace1.substr(0, replace1.find_first_of(",")).c_str();
+                Serial.println("numero 2 : ");
+                Serial.println(n2);
+                string replace2 = replace1.replace(0, replace1.find_first_of(",") + 1, "");
+                string replace3 = replace2.replace(replace2.find_first_of(")"), 1, "");
+                const char *n3 = replace3.substr(0).c_str();
+                Serial.println("numero 3 : ");
+                Serial.println(n3);
+                leds[XY(j, i)] = CRGB((uint8_t)atoi(n1), (uint8_t)atoi(n2), (uint8_t)atoi(n3));
+                countColors++;
+            }
         }
     }
-
-    // Cancella il task corrente
-    vTaskDelete(NULL);
+    else
+        Serial.println("dimensione del vector = 0");
+    // setColors(1);
+    getTasks();
 }
 
 // Task per gestire il sensore di luminosità
 void lightSensorTask(void *parameter)
 {
-    // Legge lo stato del sensore di movimento
-    unsigned int pir_status = *(unsigned int *)parameter;
+   // unsigned int pir_status = *(unsigned int *)parameter;
+    Serial.println("Valore del pir nel task sensorel luminosità: ");
+    Serial.println(pir_value);
 
     for (;;)
     {
+
         // Se il sensore di movimento è attivo
-        if (pir_status)
+        if (pir_value)
         {
             // Ottiene la luminosità e imposta la luminosità dei LED
             float lux = getLux();
             FastLED.setBrightness(setBrightness(lux));
+            //setColors(pir_status);
 
             // Stampa la luminosità sulla porta seriale
             Serial.println("Brightness: " + String(setBrightness(lux)));
         }
         else
         {
+            //setColors(pir_value);
             Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
         }
-        vTaskDelay(5000);
+
+        vTaskDelay(4000);
     }
     // Cancella il task corrente
     vTaskDelete(NULL);
@@ -88,25 +97,44 @@ void lightSensorTask(void *parameter)
  */
 void ledMatrixTask(void *parameter)
 {
+   
     // Legge lo stato del sensore di movimento e imposta i colori della matrice LED
-    unsigned int pir_status = *(unsigned int *)parameter;
-    // setColors(pir_status);
-
-    // Cancella il task corrente
-    vTaskDelete(NULL);
-}
-void imageRequestTask(void *parameter)
-{
-    unsigned int pir_status = *(unsigned int *)parameter;
+   // unsigned int pir_status = *(unsigned int *)parameter;
     for (;;)
     {
-        client.publish(topic_req, "immagine1");
-
-        setColors(pir_status);
+        setColors(pir_value);
         vTaskDelay(5000);
     }
-    client.setCallback(callback);
+
+    vTaskDelete(NULL);
+}
+/**
+ * 
+*/
+void imageRequestTask()
+{
+
+    client.publish(topic_req, "immagine1");
     client.subscribe(topic_images);
+    client.setCallback(callback);
+
+    // vTaskDelete(NULL);
+    // client.setCallback(callback);
+    // client.subscribe(topic_images);
+}
+/**
+ * 
+*/
+void pirStatusTask(void *parameter)
+{
+
+    for (;;)
+    {
+        pir_value = digitalRead(19);
+        
+        pir_value ? Serial.println("MOVIMENTO RILEVATO") : Serial.println("NESSUN MOVIMENTO RILEVATO...");
+        vTaskDelay(3000);
+    }
     vTaskDelete(NULL);
 }
 
@@ -116,11 +144,12 @@ void imageRequestTask(void *parameter)
  * La funzione chiama la funzione xTaskCreate per creare il task lightSensorTask con priorità 1 e il task ledMatrixTask con priorità 2.
  * Entrambi i task ricevono lo stato del sensore di movimento come parametro.
  */
-void getTasks(unsigned int pir_status)
+void getTasks()
 {
-    xTaskCreate(imageRequestTask, "IMAGE_REQUEST_TASK", 10000, (void *)&pir_status, 1, NULL);
-    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, (void *)&pir_status, 2, NULL);
-    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, (void *)&pir_status, 3, NULL);
+    xTaskCreate(pirStatusTask, "PIR_STATUS_TASK", 10000, NULL, 1, NULL);
+    // xTaskCreate(imageRequestTask, "IMAGE_REQUEST_TASK", 10000, NULL, 1, NULL);
+    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, NULL, 2, NULL);
+    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, NULL, 3, NULL);
 }
 /**
  *
@@ -152,11 +181,16 @@ void setColors(int pir_status)
 
     if (pir_status)
     {
+        Serial.println("Matrice accesa...");
         FastLED.show();
-        FastLED.clear();
+
     }
     else
+    {
+        Serial.println("Matrice spenta...");
+        FastLED.setBrightness(0);
         FastLED.show();
+    }
 }
 
 /*
@@ -274,6 +308,7 @@ void initPubSub()
 void callback(char *topic, byte *payload, unsigned int length)
 {
     char *message = new char[length];
+
     Serial.print("Messaggio ricevuto dal topic : ");
     Serial.print(topic);
     Serial.print('\n');
@@ -288,7 +323,9 @@ void callback(char *topic, byte *payload, unsigned int length)
 
     if (s == "fine")
     {
+        if(colors.size() == 64){
         parsePayload(colors);
+        }else Serial.println("Non sono stati ricevuti abbastanza colori");
     }
     else
     {
