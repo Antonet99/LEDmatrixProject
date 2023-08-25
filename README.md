@@ -1,4 +1,4 @@
-# SOD-2023
+# Progetto di Sistemi Operativi Dedicati (SOD)
 
-docs FreeRTOS:
-- https://esp32tutorials.com/esp32-esp-idf-freertos-tutorial-create-tasks/
+
+
