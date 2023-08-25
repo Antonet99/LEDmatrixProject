@@ -1,24 +1,52 @@
 #include "headers/taskHandler.hpp"
 
+// Dichiarazioni e inizializzazioni delle variabili e oggetti necessari
+
+// Sensore di luminosità
+BH1750 lightMeter;
+
+// Matrice LED
+CRGB leds[NUM_LEDS];
+
+// Topic MQTT per le immagini
 const char *topic_images = "rpi/images";
+
+// Topic MQTT per le richieste di immagini
 const char *topic_req = "data/reqImage";
+
+// Credenziali di connessione WiFi
 const char *ssid = "Vodafone-A48487438";
 const char *wifi_password = "psLLfEEMA4AdGhCX";
-unsigned int pir_value = 0;
-const char *mqtt_username = "sod";   // my mqtt username
-const char *mqtt_password = "sod23"; // my mqtt password
+
+// Credenziali di connessione MQTT
+const char *mqtt_username = "sod";
+const char *mqtt_password = "sod23";
 const char *mqtt_clientID = "esp32_sod";
-const char *mqtt_server = "192.168.1.3"; // my mqtt server address
+const char *mqtt_server = "192.168.1.3";
 unsigned int mqtt_port = 1883;
 
+// Variabile per lo stato del sensore di movimento
+unsigned int pir_value = 0;
+
+// Vettore per memorizzare i colori ricevuti
 vector<string> colors;
-BH1750 lightMeter;
-CRGB leds[NUM_LEDS];
+
+// Oggetto per la connessione WiFi
 WiFiClient askClient;
-PubSubClient client(mqtt_server, mqtt_port, askClient); // my clientID
+
+// Oggetto per il client MQTT
+PubSubClient client(mqtt_server, mqtt_port, askClient);
 
 /**
+ * @brief Funzione per analizzare e interpretare il payload ricevuto.
  *
+ * Questa funzione prende in input un vettore di stringhe rappresentante il payload ricevuto.
+ * Analizza il payload per estrarre i valori dei colori e li utilizza per impostare i colori dei LED sulla matrice.
+ *
+ * @param payload Un vettore di stringhe contenente il payload ricevuto.
+ *
+ * NOTA: La funzione utilizza una serie di operazioni di manipolazione delle stringhe per estrarre i valori dei colori.
+ * La logica può essere complessa a causa della formattazione dei dati nel payload.
  */
 void parsePayload(vector<string> payload)
 {
@@ -40,14 +68,17 @@ void parsePayload(vector<string> payload)
                 string replace1 = a.replace(0, a.find_first_of(",") + 1, "");
                 Serial.println("numero 1 : ");
                 Serial.println(n1);
+
                 const char *n2 = replace1.substr(0, replace1.find_first_of(",")).c_str();
                 Serial.println("numero 2 : ");
                 Serial.println(n2);
                 string replace2 = replace1.replace(0, replace1.find_first_of(",") + 1, "");
+
                 string replace3 = replace2.replace(replace2.find_first_of(")"), 1, "");
                 const char *n3 = replace3.substr(0).c_str();
                 Serial.println("numero 3 : ");
                 Serial.println(n3);
+
                 leds[XY(j, i)] = CRGB((uint8_t)atoi(n1), (uint8_t)atoi(n2), (uint8_t)atoi(n3));
                 countColors++;
             }
@@ -55,51 +86,52 @@ void parsePayload(vector<string> payload)
     }
     else
         Serial.println("dimensione del vector = 0");
-    // setColors(1);
     getTasks();
 }
 
-// Task per gestire il sensore di luminosità
+/**
+ * @brief Attività per gestire il sensore di luminosità.
+ *
+ * Questa attività ciclicamente legge il valore del sensore di movimento e, se attivo, calcola la luminosità ambientale
+ * utilizzando la funzione getLux. In base al valore di luminosità, imposta la luminosità della matrice LED utilizzando la
+ * funzione setBrightness.
+ *
+ * NOTA: La chiamata a vTaskDelete(NULL) viene eseguita alla fine dell'attività per eliminare il task.
+ */
 void lightSensorTask(void *parameter)
 {
-   // unsigned int pir_status = *(unsigned int *)parameter;
     Serial.println("Valore del pir nel task sensorel luminosità: ");
     Serial.println(pir_value);
 
     for (;;)
     {
 
-        // Se il sensore di movimento è attivo
         if (pir_value)
         {
-            // Ottiene la luminosità e imposta la luminosità dei LED
             float lux = getLux();
             FastLED.setBrightness(setBrightness(lux));
-            //setColors(pir_status);
 
-            // Stampa la luminosità sulla porta seriale
             Serial.println("Brightness: " + String(setBrightness(lux)));
         }
         else
         {
-            //setColors(pir_value);
             Serial.println("Sensore di luminosità spento ( movimento non rilevato )");
         }
 
         vTaskDelay(4000);
     }
-    // Cancella il task corrente
     vTaskDelete(NULL);
 }
 
 /**
+ * @brief Attività per gestire la matrice LED.
+ *
+ * Questa attività ciclicamente imposta i colori della matrice LED in base allo stato del sensore di movimento.
+ * Viene utilizzata la funzione setColors per definire i colori dei LED sulla matrice.
  *
  */
 void ledMatrixTask(void *parameter)
 {
-   
-    // Legge lo stato del sensore di movimento e imposta i colori della matrice LED
-   // unsigned int pir_status = *(unsigned int *)parameter;
     for (;;)
     {
         setColors(pir_value);
@@ -108,30 +140,36 @@ void ledMatrixTask(void *parameter)
 
     vTaskDelete(NULL);
 }
+
 /**
- * 
-*/
+ * @brief Attività per richiedere immagini tramite MQTT.
+ *
+ * Questa attività pubblica un messaggio di richiesta di immagine su un topic MQTT,
+ * quindi si iscrive al topic delle immagini e imposta una callback per gestire le risposte.
+ *
+ */
 void imageRequestTask()
 {
 
     client.publish(topic_req, "immagine1");
     client.subscribe(topic_images);
     client.setCallback(callback);
-
-    // vTaskDelete(NULL);
-    // client.setCallback(callback);
-    // client.subscribe(topic_images);
 }
+
 /**
- * 
-*/
+ * @brief Attività per monitorare lo stato del sensore PIR.
+ *
+ * Questa attività legge periodicamente lo stato del sensore PIR e ne
+ * stampa lo stato sulla porta seriale.
+ *
+ * @param parameter Parametro passato all'attività (non utilizzato in questo caso).
+ */
 void pirStatusTask(void *parameter)
 {
-
     for (;;)
     {
         pir_value = digitalRead(19);
-        
+
         pir_value ? Serial.println("MOVIMENTO RILEVATO") : Serial.println("NESSUN MOVIMENTO RILEVATO...");
         vTaskDelay(3000);
     }
@@ -139,20 +177,30 @@ void pirStatusTask(void *parameter)
 }
 
 /**
- * Crea due task per gestire sensore di luminosità e matrice LED.
- * Argomento: stato del sensore di movimento.
- * La funzione chiama la funzione xTaskCreate per creare il task lightSensorTask con priorità 1 e il task ledMatrixTask con priorità 2.
- * Entrambi i task ricevono lo stato del sensore di movimento come parametro.
+ * @brief Configura e avvia tutte le attività necessarie per il sistema.
+ *
+ * Questa funzione crea le attività per monitorare lo stato del sensore PIR,
+ * gestire le letture del sensore di luminosità e gestire la visualizzazione
+ * della matrice LED.
  */
 void getTasks()
 {
     xTaskCreate(pirStatusTask, "PIR_STATUS_TASK", 10000, NULL, 1, NULL);
-    // xTaskCreate(imageRequestTask, "IMAGE_REQUEST_TASK", 10000, NULL, 1, NULL);
     xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, NULL, 2, NULL);
     xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, NULL, 3, NULL);
 }
+
 /**
+ * @brief Funzione per mappare le coordinate (x, y) su un indice di LED.
  *
+ * Questa funzione mappa una coppia di coordinate (x, y) sulla matrice LED
+ * a un indice corrispondente nell'array di LED. Gli indici sono definiti in base
+ * alla disposizione dei LED nella matrice e sono utilizzati per accedere
+ * agli elementi nell'array.
+ *
+ * @param x La coordinata x del LED nella matrice.
+ * @param y La coordinata y del LED nella matrice.
+ * @return L'indice corrispondente all'array di LED.
  */
 uint8_t XY(uint8_t x, uint8_t y)
 {
@@ -176,6 +224,16 @@ uint8_t XY(uint8_t x, uint8_t y)
     return j;
 }
 
+/**
+ * @brief Imposta i colori dei LED in base allo stato del sensore PIR.
+ *
+ * Questa funzione imposta i colori dei LED sulla matrice in base allo stato del sensore PIR.
+ * Se il sensore PIR rileva movimento, vengono impostati dei colori specifici per i LED.
+ * Altrimenti, viene richiamata solo la funzione FastLED.show() per visualizzare
+ * i cambiamenti precedenti della matrice.
+ *
+ * @param pir_status Lo stato del sensore PIR: 1 se rileva movimento, 0 altrimenti.
+ */
 void setColors(int pir_status)
 {
 
@@ -183,7 +241,6 @@ void setColors(int pir_status)
     {
         Serial.println("Matrice accesa...");
         FastLED.show();
-
     }
     else
     {
@@ -193,17 +250,27 @@ void setColors(int pir_status)
     }
 }
 
-/*
+/**
+ * @brief Configura la matrice LED utilizzando FastLED.
  *
+ * Questa funzione configura la matrice LED utilizzando la libreria FastLED.
+ * Viene specificato il tipo di chipset, il pin di collegamento dei LED, l'ordine dei colori
+ * e il puntatore all'array dei LED. Inoltre, viene applicata una correzione tipica per i LED SMD5050.
  */
 void setMatrixConfig()
 {
     FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalSMD5050);
 }
-/*
- *
- */
 
+/**
+ * @brief Calcola e imposta la luminosità dei LED sulla matrice in base al valore di luminosità ricevuto.
+ *
+ * Questa funzione prende in input il valore di luminosità "lux" e calcola un valore di luminosità appropriato per i LED sulla matrice.
+ * Il valore "lux" viene suddiviso in intervalli e la luminosità dei LED viene regolata di conseguenza.
+ *
+ * @param lux Il valore di luminosità ricevuto dal sensore.
+ * @return uint8_t Il valore di luminosità dei LED da impostare.
+ */
 uint8_t setBrightness(float lux)
 {
     uint8_t brightness = 0;
@@ -229,18 +296,29 @@ uint8_t setBrightness(float lux)
     return brightness;
 }
 
-/*
+/**
+ * @brief Ottiene il livello di illuminazione in lux dal sensore di luminosità.
  *
+ * Questa funzione inizializza il sensore di luminosità, legge il valore di illuminazione
+ * e restituisce il valore in formato float. Inoltre, stampa il valore letto sulla porta seriale.
+ *
+ * @return Il livello di illuminazione in lux.
  */
 float getLux()
 {
     lightMeter.begin();
-    float lux = (int)lightMeter.readLightLevel(); // leggi il valore dal sensore di luminosità
+    float lux = (int)lightMeter.readLightLevel();
     String message = "Luminosità rilevata: " + String(lux);
     Serial.println(message);
     return lux;
 }
 
+/**
+ * @brief Connette il client MQTT al server MQTT specificato.
+ *
+ * Questa funzione imposta il server MQTT e tenta la connessione. Se la connessione non riesce,
+ * verranno effettuati tentativi di riconnessione fino a quando la connessione non sarà stabilita.
+ */
 void mqttConn()
 {
     Serial.print("**** Connesso al server MQTT : ");
@@ -255,7 +333,6 @@ void mqttConn()
  */
 void reconnect()
 {
-    // ciclo con il quale si tenta la riconnessione
     while (!client.connected())
     {
         Serial.print("********** Tentativo di connessione MQTT...");
@@ -272,6 +349,13 @@ void reconnect()
         }
     }
 }
+
+/**
+ * @brief Connette il dispositivo al WiFi utilizzando le credenziali specificate.
+ *
+ * Questa funzione tenta la connessione al WiFi utilizzando le credenziali SSID e password specificate.
+ * Verrà attesa la connessione stabilita prima di proseguire.
+ */
 void wifiConn()
 {
 
@@ -289,8 +373,12 @@ void wifiConn()
     Serial.println("-> indirizzo IP: ");
     Serial.println(WiFi.localIP());
 }
+
 /**
+ * @brief Inizializza la connessione al broker MQTT.
  *
+ * Questa funzione imposta il server MQTT e tenta di connettersi utilizzando le credenziali fornite.
+ * La connessione verrà stabilita o verranno effettuati tentativi fino a quando la connessione non sarà stabilita.
  */
 void initPubSub()
 {
@@ -298,12 +386,19 @@ void initPubSub()
     client.setServer(mqtt_server, mqtt_port);
     client.connect(mqtt_clientID, mqtt_username, mqtt_password);
 }
+
 /**
- * Funzione di callback utilizzata per verificare la corretta ricezione dei dati
- * ed il payload con le informazioni.
- * @param topic topic dal quale vengono ricevuti i dati (topic su cui è stato effettuato il subscribe)
- * @param payload dati effettivi ricevuti dal topic
- * @param lenght lunghezza del messaggio.
+ * @brief Callback per la ricezione dei messaggi MQTT.
+ *
+ * Questa funzione viene chiamata quando un messaggio MQTT viene ricevuto sul topic sottoscritto.
+ * Il payload del messaggio viene analizzato per ottenere i dati necessari per la configurazione dei colori.
+ * Se il payload contiene il messaggio "fine", verrà verificato se sono stati ricevuti abbastanza colori per configurare la matrice LED.
+ * In caso contrario, verrà stampato un messaggio di avviso.
+ * Se il payload contiene dati colori validi, questi verranno aggiunti al vettore colors.
+ *
+ * @param topic Il topic del messaggio MQTT.
+ * @param payload Il payload del messaggio MQTT.
+ * @param length La lunghezza del payload.
  */
 void callback(char *topic, byte *payload, unsigned int length)
 {
@@ -323,21 +418,25 @@ void callback(char *topic, byte *payload, unsigned int length)
 
     if (s == "fine")
     {
-        if(colors.size() == 64){
-        parsePayload(colors);
-        }else Serial.println("Non sono stati ricevuti abbastanza colori");
+        if (colors.size() == 64)
+        {
+            parsePayload(colors);
+        }
+        else
+            Serial.println("Non sono stati ricevuti abbastanza colori");
     }
     else
     {
         colors.push_back(s);
         Serial.print('\n');
     }
-
-    // if(topic == topic_images) Serial.println((char*) payload);
-    // else Serial.println("NESSUN SUBSCRIBE");
 }
+
 /**
+ * @brief Funzione per la gestione delle operazioni di loop del client MQTT.
  *
+ * Questa funzione deve essere chiamata all'interno del loop principale per permettere al
+ * client MQTT di eseguire le operazioni di loop necessarie.
  */
 void clientLoop()
 {
