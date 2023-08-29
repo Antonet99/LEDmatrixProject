@@ -31,10 +31,10 @@ Il progetto consiste nello sviluppo di un sistema con i seguenti obiettivi:\
  </p>
 
 ### Componenti hw
-• Sensore di luminosità BH1750
-• Sensore di movimento HC-SR501
-• Matrice LED WS2812B
-• ESP32
+• Sensore di luminosità BH1750\
+• Sensore di movimento HC-SR501\
+• Matrice LED WS2812B\
+• ESP32\
 • Raspberry Pi 3B+
 
 
