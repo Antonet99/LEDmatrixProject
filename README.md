@@ -57,6 +57,13 @@ sudo systemctl restart mosquitto
 
 
 ### Acquisizione dei dati da parte dell'ESP32
+Nel sistema realizzato l'ESP32 acquisisce i dati dal sensore di luminosità, dal sensore di movimento (PIR) e dal RPi. <br>
+Il dato acquisito dal BH1750, che indica l'illuminamento rilevato, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led.
+
+<p align="center" style="margin-top: 10px;margin-bottom: 10px">
+<img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt.png" width="550" > 
+ </p>
+ 
 #### Sensore di luminosità
 #### Sensore di movimento
 ### Gestione della matrice led
@@ -72,11 +79,9 @@ sudo systemctl restart mosquitto
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/freertos.png" width="550" > 
  </p>
 
-### Comunicazione tramite MQTT
 
-<p align="center" style="margin-top: 10px;margin-bottom: 10px">
-<img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt.png" width="550" > 
- </p>
+
+
 
 ### Componenti hw
 • Sensore di luminosità BH1750\
