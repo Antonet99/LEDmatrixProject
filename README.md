@@ -33,6 +33,27 @@ La configurazione del Rpi è stata fatta attraverso i seguenti passaggi: <br>
  mosquitto -v
  ```
  
+ Inoltre, per abilitare l'accesso remoto (senza autenticazione) è stata utilizzata la seguente procedura: <br>
+ • Aprire il file mosquitto.conf
+  ```
+ sudo nano /etc/mosquitto/mosquitto.conf
+ ```
+• Alla fine del file aggiungere le due seguenti istruzioni
+  ```
+ listener 1883
+ ```
+```
+allow_anonymous true
+ ```
+<p align="center" style="margin-top: 10px;margin-bottom: 10px">
+<img src="https://github.com/alexxdediu/SOD-2023/blob/main/mosquitto-conf.png" width="550" > 
+</p>
+
+• Effettuare un riavvio di Mosquitto
+  ```
+sudo systemctl restart mosquitto
+ ```
+
 
 
 ### Acquisizione dei dati da parte dell'ESP32
