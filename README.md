@@ -57,6 +57,14 @@ allow_anonymous true
   ```
 sudo systemctl restart mosquitto
  ```
+<br>
+
+#### Utilizzo del RPi
+Per lo sviluppo delle funzionalità del RPi è stata utilizzata la libreria [paho-mqtt](https://pypi.org/project/paho-mqtt/). <br>
+Nella Cartella **RPi** sono presenti due file principali: <br>
+
+• *pub.py*: codice con cui il RPi pubblica sul topic **data/sendImage** i colori dell'immagine da visualizzare sulla matrice led.<br>
+• *sub.py*: codice con cui il Rpi acquisisce il dato pubblicato dall'ESP32 sul topic **data/reqImage**.
 
 
 
