@@ -1,7 +1,8 @@
 # Progetto di Sistemi Operativi Dedicati (SOD)
 
 ## OBIETTIVI E SPECIFICHE
-Il progetto consiste nello sviluppo di un sistema con i seguenti obiettivi:\
+Il progetto consiste nello sviluppo di un sistema con i seguenti obiettivi:
+
 • Acquisizione dei dati dal sensore di luminosità e dal sensore di movimento da parte dell'ESP32\
 • Gestione della matrice led da parte dell'ESP32\
 • Coordinamento dei task gestiti da FreeRTOS\
