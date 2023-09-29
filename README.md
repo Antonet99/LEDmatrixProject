@@ -10,7 +10,13 @@ Il progetto consiste nello sviluppo di un sistema con i seguenti obiettivi:\
 ## PROGETTAZIONE E SVILUPPO
 ### Ambiente di sviluppo
 
-Per lo sviluppo del progetto è stato utilizzato l'editor Visual Studio Codde
+Per lo sviluppo del progetto è stato utilizzato l'editor [Visual Studio Code](https://code.visualstudio.com/) e l'estensione [PlatformIO](https://platformio.org/).<br>
+L'estensione permette di avere un IDE per la gestione delle librerie e dei test di sviuluppo.
+
+<p align="center" style="margin-top: 10px;margin-bottom: 10px">
+<img src="https://github.com/alexxdediu/SOD-2023/blob/main/platform.png" width="550" > 
+</p>
+
 
 ### Configurazione del Raspberry Pi
 La comunicazione tra RPi e Esp32 avviene tramite protocollo MQTT. <br>
@@ -57,9 +63,9 @@ allow_anonymous true
   ```
 sudo systemctl restart mosquitto
  ```
-<br>
 
 #### Utilizzo del RPi
+
 Per lo sviluppo delle funzionalità del RPi è stata utilizzata la libreria [paho-mqtt](https://pypi.org/project/paho-mqtt/). <br>
 Nella Cartella **RPi** sono presenti due file principali: <br>
 
@@ -72,10 +78,6 @@ Nella Cartella **RPi** sono presenti due file principali: <br>
 Nel sistema realizzato l'ESP32 acquisisce i dati dal sensore di luminosità, dal sensore di movimento (PIR) e dal RPi. <br>
 Il dato acquisito dal BH1750, che indica l'illuminamento rilevato, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led. <br>
 
-<p align="center" style="margin-top: 10px;margin-bottom: 10px">
-<img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt.png" width="550" > 
- </p>
- 
 #### Sensore di luminosità
 
 Il sensore BH1750 rileva l'illuminamento e resistuisce un valore di tipo *float*.<br>
@@ -98,7 +100,14 @@ Di seguito viene riportato una immagine che rappresenta il funzionamento del sis
 ### Coordinamento dei task con FreeRTOS
 
 Il coordinamento delle diverse azioni che il programma deve svolgere viene svolto attraverso le librerie [FreeRTOS](https://www.freertos.org/index.html).<br>
+In particolare vengono utilizzate le funzioni:<br>
+
+• *xTaskCreate* per la creazione dei task, in particolare possono essere specificati eventuali parametri e priorità da assegnare.<br>
+• *vTaskDelete* per terminare un task ed eliminarlo.<br>
+• *vTaskDelay* per tardare l'esecuzione del task.<br>
+
 In particolare i task vengono svolti nel seguente ordine: <br>
+
 • Viene rilevato il valore del PIR.<br>
 • Viene rilevato il valore del sensore di luminosità.<br>
 • Viene attivatà la matrice con la giusta intensità.<br>
