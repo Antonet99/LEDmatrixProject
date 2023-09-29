@@ -77,11 +77,11 @@ Nella Cartella **RPi** sono presenti due file principali: <br>
 
 ### Acquisizione dei dati da parte dell'ESP32
 Nel sistema realizzato l'ESP32 acquisisce i dati dal sensore di luminosità, dal sensore di movimento (PIR) e dal RPi. <br>
-Il dato acquisito dal BH1750, che indica la luminosità rilevata, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led. <br>
+Il dato acquisito dal BH1750, che indica l'illuminamento rilevato, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led. <br>
 
 #### Sensore di luminosità
 
-Il sensore BH1750 rileva la luminosità e restituisce un valore di tipo *float*.<br>
+Il sensore BH1750 rileva l'illuminamento e restituisce un valore di tipo *float*.<br>
 In base al dato, il codice invierà una richiesta tramite il topic **data/reqImage**;ovvero verrà pubblicato il numero che identifica l'immagine desiderata (1,2 o 3) ed il Rpi, che sarà iscritto al topic, acquisirà il dato e pubblicherà sul topic **data/sendImage** una stringa contenente i colori dell'immagine nel formato *CRGB* (formato della libreria *FastLed*).
 
 #### Sensore di movimento
@@ -91,7 +91,7 @@ Il valore acquisito indica se la matrice è accesa o spenta, oltre a consentire 
 
 ### Gestione della matrice led
 
-La matrice composta da 64 led, consente di visualizzare un'immagine con una luminosità dettata dal sensore BH1750.<br>
+La matrice composta da 64 led, consente di visualizzare un'immagine con una luminosità dei led dettata dal sensore BH1750.<br>
 Di seguito viene riportata un'immagine che rappresenta il funzionamento del sistema composto da ESP32 e RPi.
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
