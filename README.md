@@ -91,10 +91,11 @@ Di seguito viene riportato una immagine che rappresenta il funzionamento del sis
 
 Il coordinamento delle diverse azioni che il programma deve svolgere viene svolto attraverso le librerie [FreeRTOS](https://www.freertos.org/index.html).<br>
 In particolare i task vengono svolti nel seguente ordine: <br>
-• Viene rilevato il valore del PIR
-• Viene rilevato il valore del sensore di luminosità
-• Viene attivatà la matrice con la giusta intensità.
+• Viene rilevato il valore del PIR.<br>
+• Viene rilevato il valore del sensore di luminosità.<br>
+• Viene attivatà la matrice con la giusta intensità.<br>
 
+<br>
 
 |Task | Componenti | Priorità | 
 |---|---|---|
@@ -102,7 +103,7 @@ In particolare i task vengono svolti nel seguente ordine: <br>
 | LIGHT_SENSOR_TASK | BH1750, ESP32 |2|
 | LEDMATRIX_TASK | ESP32, WS2812B |3|
 
-
+<br>
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/freertos.png" width="550" > 
