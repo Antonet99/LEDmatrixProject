@@ -8,6 +8,10 @@ Il progetto consiste nello sviluppo di un sistema con i seguenti obiettivi:\
 • Gestione della comunicazione tra ESP32 e Raspberry Pi tramite protocollo MQTT
 
 ## PROGETTAZIONE E SVILUPPO
+### Ambiente di sviluppo
+
+Per lo sviluppo del progetto è stato utilizzato l'editor Visual Studio Codde
+
 ### Configurazione del Raspberry Pi
 La comunicazione tra RPi e Esp32 avviene tramite protocollo MQTT. <br>
 MQTT è un protocollo di messaggistica basato su standard, o un insieme di regole, utilizzato per la comunicazione tra macchine.
@@ -58,22 +62,47 @@ sudo systemctl restart mosquitto
 
 ### Acquisizione dei dati da parte dell'ESP32
 Nel sistema realizzato l'ESP32 acquisisce i dati dal sensore di luminosità, dal sensore di movimento (PIR) e dal RPi. <br>
-Il dato acquisito dal BH1750, che indica l'illuminamento rilevato, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led.
+Il dato acquisito dal BH1750, che indica l'illuminamento rilevato, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led. <br>
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt.png" width="550" > 
  </p>
  
 #### Sensore di luminosità
+
+Il sensore BH1750 rileva l'illuminamento e resistuisce un valore di tipo *float*.<br>
+In base al dato il codice invierà una richiesta tramite il topic **data/reqImage**;ovvero verrà pubblicato il numero che identifica l'immagine desiderata (1,2 o 3) ed il Rpi, che sarà iscritto al topic, acquisirà il dato e pubblicherà sul topic **data/sendImage** una stringa contenente i colori dell'immagine nel formato *CRGB* (formato della libreria *FastLed*).
+
 #### Sensore di movimento
+
+Il sensore di movimento, collegato direttamente all'ESP32, rileverà i movimenti e riporterà il valore 1 se un movimento è stato rilevato e 0 altrimenti. <br>
+Il valore acquisito indicherà se la matrice è accesa o spenta, oltre a consentire la lettura del valore del sensore BH1750.
+
 ### Gestione della matrice led
+
+La matrice composta da 64 led, consentirà di visualizzare una immagine con una luminosità dettata dal sensore BH1750.<br>
+Di seguito viene riportato una immagine che rappresenta il funzionamento del sistema composto da ESP32 e RPi.
+
+<p align="center" style="margin-top: 10px;margin-bottom: 10px">
+<img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt.png" width="550" > 
+ </p>
+ 
 ### Coordinamento dei task con FreeRTOS
+
+Il coordinamento delle diverse azioni che il programma deve svolgere viene svolto attraverso le librerie [FreeRTOS](https://www.freertos.org/index.html).<br>
+In particolare i task vengono svolti nel seguente ordine: <br>
+• Viene rilevato il valore del PIR
+• Viene rilevato il valore del sensore di luminosità
+• Viene attivatà la matrice con la giusta intensità.
+
 
 |Task | Componenti | Priorità | 
 |---|---|---|
 | PIR_STATUS_TASK | ESP32, PIR |1|
 | LIGHT_SENSOR_TASK | BH1750, ESP32 |2|
 | LEDMATRIX_TASK | ESP32, WS2812B |3|
+
+
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/freertos.png" width="550" > 
