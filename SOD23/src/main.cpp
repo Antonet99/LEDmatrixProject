@@ -25,7 +25,7 @@ void setup()
   setMatrixConfig();
 
   // Avvio del task per richiedere l'immagine
-  imageRequestTask();
+  publishImageRequest();
 
   // Inizializzazione del bus I2C
   Wire.begin();

@@ -4,13 +4,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-
-
-//void lightSensorStart();
-//void lightSensorTask(void *parameter);
 void getTasks();
 void ledMatrixTask(void *parameter);
-void imageRequestTask() ; 
+void publishImageRequest() ; 
 void pirStatusTask(void* parameter);
 void lightSensorTask(void* parameter);
 uint8_t XY(uint8_t x, uint8_t y);

@@ -15,18 +15,22 @@ const char *topic_images = "rpi/images";
 const char *topic_req = "data/reqImage";
 
 // Credenziali di connessione WiFi
-const char *ssid = "Vodafone-A48487438";
-const char *wifi_password = "psLLfEEMA4AdGhCX";
+const char *ssid = "TP-LINK_C930";
+const char *wifi_password = "88099774";
 
 // Credenziali di connessione MQTT
 const char *mqtt_username = "sod";
 const char *mqtt_password = "sod23";
 const char *mqtt_clientID = "esp32_sod";
-const char *mqtt_server = "192.168.1.3";
+const char *mqtt_server = "192.168.0.106";
 unsigned int mqtt_port = 1883;
 
 // Variabile per lo stato del sensore di movimento
 unsigned int pir_value = 0;
+
+const char* img1 = "immagine1";
+const char* img2 = "immagine2";
+const char* img3 = "immagine3";
 
 // Vettore per memorizzare i colori ricevuti
 vector<string> colors;
@@ -148,12 +152,34 @@ void ledMatrixTask(void *parameter)
  * quindi si iscrive al topic delle immagini e imposta una callback per gestire le risposte.
  *
  */
-void imageRequestTask()
+void  publishImageRequest(void* parameters)
 {
+    int counter = 0;
+    for(;;){
+    pir_value = 0;
+    if(counter = 0) {
+        client.publish(topic_req, img1);
+        counter++;
+    }
+    else if(counter = 1) {
+        client.publish(topic_req, img2);
+        counter ++;
+    }
 
-    client.publish(topic_req, "immagine1");
+    else if(counter = 3) 
+    {client.publish(topic_req, img3);
+        counter = 0;
+    }
+
+
     client.subscribe(topic_images);
     client.setCallback(callback);
+    
+    vTaskDelay(10000);
+
+
+    }
+    vTaskDelete(NULL);
 }
 
 /**
@@ -184,10 +210,10 @@ void pirStatusTask(void *parameter)
  * della matrice LED.
  */
 void getTasks()
-{
-    xTaskCreate(pirStatusTask, "PIR_STATUS_TASK", 10000, NULL, 1, NULL);
-    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, NULL, 2, NULL);
-    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, NULL, 3, NULL);
+{   xTaskCreate(publishImageRequest,"PUBLISH_IMAGE",10000,NULL,1,NULL);
+    xTaskCreate(pirStatusTask, "PIR_STATUS_TASK", 10000, NULL, 2, NULL);
+    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, NULL, 3, NULL);
+    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, NULL, 4, NULL);
 }
 
 /**
