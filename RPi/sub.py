@@ -15,8 +15,6 @@ def on_disconnect(client, userdata, rc):
    print("Non connesso a MQTT server")
 
 def callback_request_image(client, userdata, msg):
-    print('Immagine richiesta: ', msg.payload.decode('utf-8'))
-    if msg.payload.decode('utf-8') == 'immagine1':
         colors_publish()
     
 def colors_publish():
@@ -31,7 +29,7 @@ flag_connected = 0
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.message_callback_add('data/reqImage', callback_request_image)
-client.connect('192.168.1.3',1883)
+client.connect('192.168.0.106',1883)
 client.loop_start()
 client_subscriptions(client)
 print("......client setup concluso............")
