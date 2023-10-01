@@ -2,6 +2,8 @@
 
 using namespace std;
 
+
+
 // Pin per il sensore di movimento
 int PIR_data = 19;
 
@@ -23,9 +25,12 @@ void setup()
 
   // Configurazione della matrice LED
   setMatrixConfig();
-
+  
   // Avvio del task per richiedere l'immagine
-  publishImageRequest();
+  
+  //publishImage();
+  //imageRequest();
+    imageRequest();
 
   // Inizializzazione del bus I2C
   Wire.begin();
@@ -33,6 +38,13 @@ void setup()
 
 void loop()
 {
+
+   imageRequest();
+
+
+   clientLoop();
   // Esegue il loop del client MQTT
-  clientLoop();
+
+ 
+  
 }

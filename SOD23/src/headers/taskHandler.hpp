@@ -6,7 +6,8 @@
 
 void getTasks();
 void ledMatrixTask(void *parameter);
-void publishImageRequest() ; 
+void imageRequest(); 
+void publishImage();
 void pirStatusTask(void* parameter);
 void lightSensorTask(void* parameter);
 uint8_t XY(uint8_t x, uint8_t y);

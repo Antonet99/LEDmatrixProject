@@ -28,9 +28,10 @@ unsigned int mqtt_port = 1883;
 // Variabile per lo stato del sensore di movimento
 unsigned int pir_value = 0;
 
-const char* img1 = "immagine1";
-const char* img2 = "immagine2";
-const char* img3 = "immagine3";
+
+
+string immagine ="";
+bool flagPublish=false;
 
 // Vettore per memorizzare i colori ricevuti
 vector<string> colors;
@@ -40,6 +41,8 @@ WiFiClient askClient;
 
 // Oggetto per il client MQTT
 PubSubClient client(mqtt_server, mqtt_port, askClient);
+
+
 
 /**
  * @brief Funzione per analizzare e interpretare il payload ricevuto.
@@ -152,35 +155,18 @@ void ledMatrixTask(void *parameter)
  * quindi si iscrive al topic delle immagini e imposta una callback per gestire le risposte.
  *
  */
-void  publishImageRequest(void* parameters)
-{
-    int counter = 0;
-    for(;;){
-    pir_value = 0;
-    if(counter = 0) {
-        client.publish(topic_req, img1);
-        counter++;
-    }
-    else if(counter = 1) {
-        client.publish(topic_req, img2);
-        counter ++;
-    }
-
-    else if(counter = 3) 
-    {client.publish(topic_req, img3);
-        counter = 0;
-    }
-
-
+void publishImage(){
     client.subscribe(topic_images);
     client.setCallback(callback);
-    
-    vTaskDelay(10000);
-
-
-    }
-    vTaskDelete(NULL);
 }
+void  imageRequest()
+{
+   
+    client.publish(topic_req, "immagine1");
+    publishImage();
+    
+}
+
 
 /**
  * @brief Attività per monitorare lo stato del sensore PIR.
@@ -210,10 +196,10 @@ void pirStatusTask(void *parameter)
  * della matrice LED.
  */
 void getTasks()
-{   xTaskCreate(publishImageRequest,"PUBLISH_IMAGE",10000,NULL,1,NULL);
-    xTaskCreate(pirStatusTask, "PIR_STATUS_TASK", 10000, NULL, 2, NULL);
-    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, NULL, 3, NULL);
-    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, NULL, 4, NULL);
+{  
+    xTaskCreate(pirStatusTask, "PIR_STATUS_TASK", 10000, NULL, 1, NULL);
+    xTaskCreate(lightSensorTask, "LIGHT_SENSOR_TASK", 10000, NULL, 2, NULL);
+    xTaskCreate(ledMatrixTask, "LEDMATRIX_TASK", 10000, NULL, 3, NULL);
 }
 
 /**
@@ -411,6 +397,7 @@ void initPubSub()
 
     client.setServer(mqtt_server, mqtt_port);
     client.connect(mqtt_clientID, mqtt_username, mqtt_password);
+   
 }
 
 /**
@@ -456,6 +443,8 @@ void callback(char *topic, byte *payload, unsigned int length)
         colors.push_back(s);
         Serial.print('\n');
     }
+    delay(5000);
+    flagPublish=true;
 }
 
 /**
