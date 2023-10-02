@@ -443,8 +443,7 @@ void callback(char *topic, byte *payload, unsigned int length)
         colors.push_back(s);
         Serial.print('\n');
     }
-    delay(5000);
-    flagPublish=true;
+   
 }
 
 /**

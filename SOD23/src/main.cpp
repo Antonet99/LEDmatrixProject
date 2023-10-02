@@ -39,7 +39,7 @@ void setup()
 void loop()
 {
 
-   imageRequest();
+   //imageRequest();
 
 
    clientLoop();
