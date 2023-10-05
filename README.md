@@ -1,55 +1,54 @@
-# Progetto di Sistemi Operativi Dedicati (SOD)
+# Dedicated Operating Systems Project (DOS)
 
-## OBIETTIVI E SPECIFICHE
-Il progetto consiste nello sviluppo di un sistema con i seguenti obiettivi:
+## GOALS AND SPECIFICATIONS
+The project aims to develop a system with the following goals:
 
-• Acquisizione dei dati dal sensore di luminosità e dal sensore di movimento da parte dell'ESP32\
-• Gestione della matrice led da parte dell'ESP32\
-• Coordinamento dei task gestiti da FreeRTOS\
-• Gestione della comunicazione tra ESP32 e Raspberry Pi tramite protocollo MQTT
+• Data acquisition from the brightness sensor and motion sensor by ESP32\
+• LED matrix management by ESP32\
+• Coordination of tasks managed by FreeRTOS\
+• Communication between ESP32 and Raspberry Pi via MQTT protocol
 
-## PROGETTAZIONE E SVILUPPO
-### Ambiente di sviluppo
+## DESIGN AND DEVELOPMENT
+### Development Environment
 
-Per lo sviluppo del progetto è stato utilizzato l'editor [Visual Studio Code](https://code.visualstudio.com/) e l'estensione [PlatformIO](https://platformio.org/).<br>
-L'estensione permette di avere un IDE per la gestione delle librerie e dei test di sviuluppo.
+The project was developed using the [Visual Studio Code](https://code.visualstudio.com/) editor and the [PlatformIO](https://platformio.org/) extension.<br>
+The extension provides an IDE for managing libraries and development tests.
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/platform.png" width="550" > 
 </p>
 
-
-### Configurazione del Raspberry Pi
-La comunicazione tra RPi e Esp32 avviene tramite protocollo MQTT. <br>
-MQTT è un protocollo di messaggistica basato su standard, o un insieme di regole, utilizzato per la comunicazione tra macchine.
-Funziona secondo i principi del modello [publish/subscribe](https://it.wikipedia.org/wiki/Publish/subscribe). Nella comunicazione di rete tradizionale, i client e i server comunicano direttamente tra loro. I client richiedono risorse o dati al server, che li elabora e invia una risposta. Tuttavia, MQTT utilizza uno schema publish/subscribe per disaccoppiare il mittente del messaggio (publisher) dal destinatario del messaggio (subscriber). Invece, un terzo componente, chiamato broker di messaggi, gestisce la comunicazione tra publisher e subscriber. Il compito del broker è quello di filtrare tutti i messaggi in arrivo da chi pubblica e distribuirli correttamente a chi si iscrive. 
+### Raspberry Pi Configuration
+Communication between RPi and ESP32 is achieved through the MQTT protocol. <br>
+MQTT is a standards-based messaging protocol, or a set of rules, used for machine-to-machine communication.
+It operates on the principles of the [publish/subscribe](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern) model. In traditional network communication, clients and servers communicate directly with each other. Clients request resources or data from the server, which processes them and sends a response. However, MQTT uses a publish/subscribe scheme to decouple the message sender (publisher) from the message receiver (subscriber). Instead, a third component, called a message broker, handles communication between publishers and subscribers. The broker's task is to filter all incoming messages from publishers and distribute them correctly to subscribers.
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt-schema.png" width="550" > 
 </p>
 
-Per poter utilizzare il Rpi come broker è stato utilizzato il software open-source [Mosquitto](https://mosquitto.org/). <br>
-La configurazione del Rpi è stata fatta attraverso i seguenti passaggi: <br>
+To use RPi as a broker, the open-source software [Mosquitto](https://mosquitto.org/) was utilized. <br>
+The RPi configuration was performed through the following steps: <br>
 
-• Installazione del broker Mosquitto
+• Installation of the Mosquitto broker
  ```
  sudo apt install -y mosquitto mosquitto-clients
  ```
-• Abilitare l'avvio automatico del broker dopo l'avvio del Rpi
+• Enable automatic startup of the broker after RPi boot
  ```
  sudo systemctl enable mosquitto.service
  ```
-• Verificare la corretta installazione
+• Verify the correct installation
  ```
  mosquitto -v
  ```
- 
- Inoltre, per abilitare l'accesso remoto (senza autenticazione) è stata utilizzata la seguente procedura: <br>
- • Aprire il file mosquitto.conf
+
+Additionally, to enable remote access (without authentication), the following procedure was used: <br>
+ • Open the mosquitto.conf file
   ```
  sudo nano /etc/mosquitto/mosquitto.conf
  ```
-• Alla fine del file aggiungere le due seguenti istruzioni
+• At the end of the file, add the following two instructions
   ```
  listener 1883
  ```
@@ -60,62 +59,60 @@ allow_anonymous true
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/mosquitto-conf.png" width="550" > 
 </p>
 
-• Effettuare un riavvio di Mosquitto
+• Restart Mosquitto
   ```
 sudo systemctl restart mosquitto
  ```
 
-#### Utilizzo del RPi
+#### RPi Usage
 
-Per lo sviluppo delle funzionalità del RPi è stata utilizzata la libreria [paho-mqtt](https://pypi.org/project/paho-mqtt/). <br>
-Nella Cartella **RPi** sono presenti due file principali: <br>
+For the development of RPi functionalities, the [paho-mqtt](https://pypi.org/project/paho-mqtt/) library was used. <br>
+In the **RPi** folder, two main files are present: <br>
 
-• *pub.py*: script con cui il RPi pubblica sul topic **data/sendImage** i colori dell'immagine da visualizzare sulla matrice led.<br>
-• *sub.py*: script con cui il Rpi acquisisce il dato pubblicato dall'ESP32 sul topic **data/reqImage**.
+• *pub.py*: script with which RPi publishes the colors of the image to be displayed on the LED matrix on the **data/sendImage** topic.<br>
+• *sub.py*: script with which RPi acquires the data published by ESP32 on the **data/reqImage** topic.
 
+### Data Acquisition by ESP32
+In the implemented system, ESP32 acquires data from the brightness sensor, motion sensor (PIR), and RPi. <br>
+The data acquired from the BH1750, which indicates the detected illumination, defines the LED matrix's light intensity. The value obtained from PIR (0 or 1) is used to turn the matrix on or off. The data obtained from RPi represents the colors used to represent the image (pixel art) on the LED matrix. <br>
 
+#### Brightness Sensor
 
-### Acquisizione dei dati da parte dell'ESP32
-Nel sistema realizzato l'ESP32 acquisisce i dati dal sensore di luminosità, dal sensore di movimento (PIR) e dal RPi. <br>
-Il dato acquisito dal BH1750, che indica l'illuminamento rilevato, definisce l'intensità della luce nei led della matrice. Il valore acquisito dal PIR (0 o 1) viene utilizzato per accendere o spegnere la matrice. I dati ottenuti dal RPi sono i colori utilizzati per rappresentare l'immagine (pixel art) nella matrice led. <br>
+The BH1750 sensor detects illumination and returns a *float* value.<br>
+Based on this data, the code will send a request via the **data/reqImage** topic, which means the number identifying the desired image (1, 2, or 3), and RPi, which is subscribed to the topic, will acquire the data and publish it on the **data/sendImage** topic in a string containing the image's colors in the *CRGB* format (the format of the *FastLed* library).
 
-#### Sensore di luminosità
+#### Motion Sensor
 
-Il sensore BH1750 rileva l'illuminamento e restituisce un valore di tipo *float*.<br>
-In base al dato, il codice invierà una richiesta tramite il topic **data/reqImage**;ovvero verrà pubblicato il numero che identifica l'immagine desiderata (1,2 o 3) ed il Rpi, che sarà iscritto al topic, acquisirà il dato e pubblicherà sul topic **data/sendImage** una stringa contenente i colori dell'immagine nel formato *CRGB* (formato della libreria *FastLed*).
+The motion sensor, directly connected to ESP32, detects movements and reports a value of 1 if movement is detected, or 0 otherwise. <br>
+The acquired value indicates whether the matrix is on or off, in addition to allowing the reading of the BH1750 sensor value.
 
-#### Sensore di movimento
+### LED Matrix Management
 
-Il sensore di movimento, collegato direttamente all'ESP32, rileva i movimenti e riporta il valore 1 se un movimento è stato rilevato, 0 altrimenti. <br>
-Il valore acquisito indica se la matrice è accesa o spenta, oltre a consentire la lettura del valore del sensore BH1750.
-
-### Gestione della matrice led
-
-La matrice composta da 64 led, consente di visualizzare un'immagine con una luminosità dei led dettata dal sensore BH1750.<br>
-Di seguito viene riportata un'immagine che rappresenta il funzionamento del sistema composto da ESP32 e RPi.
+The matrix composed of 64 LEDs allows displaying an image with LED brightness determined by the BH1750 sensor.<br>
+Below is an image representing the operation of the system composed of ESP32 and RPi.
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/mqtt.png" width="550" > 
  </p>
  
-### Coordinamento dei task con FreeRTOS
+### Task Coordination with FreeRTOS
 
-Il coordinamento delle diverse azioni che il programma deve svolgere viene svolto attraverso la libreria [FreeRTOS](https://www.freertos.org/index.html).<br>
-Nello specifico, vengono utilizzate le funzioni:<br>
+The coordination of various program actions is achieved through the [FreeRTOS](https://www.freertos.org/index.html) library.<br>
+Specifically, the following functions are used:<br>
 
-• *xTaskCreate* per la creazione dei task, in particolare possono essere specificati eventuali parametri e priorità da assegnare.<br>
-• *vTaskDelete* per terminare un task ed eliminarlo.<br>
-• *vTaskDelay* per tardare l'esecuzione del task.<br>
+• *xTaskCreate* for task creation, including specifying any parameters and priorities to assign.<br>
+• *vTaskDelete* to terminate and delete a task.<br>
+• *vTaskDelay* to delay task execution.<br>
 
-I task all'interno del codice vengono eseguiti con questo ordine: <br>
+Tasks within the code are executed in the following order: <br>
 
-• Rilevazione del valore del PIR.<br>
-• Rilevazione del valore del sensore di luminosità.<br>
-• Attivazione della matrice con la corretta intensità dei led.<br>
+• Detection of the PIR value.<br>
+• Detection of the brightness sensor value.<br>
+• Activation of the matrix with the correct LED intensity.<br>
 
 <br>
 
-|Task | Componenti | Priorità | 
+|Task | Components | Priority | 
 |---|---|---|
 | PIR_STATUS_TASK | ESP32, PIR |1|
 | LIGHT_SENSOR_TASK | BH1750, ESP32 |2|
@@ -127,16 +124,9 @@ I task all'interno del codice vengono eseguiti con questo ordine: <br>
 <img src="https://github.com/alexxdediu/SOD-2023/blob/main/freertos.png" width="550" > 
  </p>
 
-
-
-
-
-### Componenti hw
-• Sensore di luminosità BH1750\
-• Sensore di movimento HC-SR501\
-• Matrice LED WS2812B\
+### Hardware Components
+• BH1750 brightness sensor\
+• HC-SR501 motion sensor\
+• WS2812B LED Matrix\
 • ESP32\
 • Raspberry Pi 3B+
-
-
-
